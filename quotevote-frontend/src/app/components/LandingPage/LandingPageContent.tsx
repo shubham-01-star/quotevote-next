@@ -138,6 +138,14 @@ export function LandingPageContent({
 }: LandingPageContentProps) {
   const router = useRouter();
   const user = useAppStore((state) => state.user.data);
+  const [searchQuery, setSearchQuery] = useState('');
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const isSearching = debouncedSearchQuery.trim().length > 0;
+
+  const { data: searchData, loading: searchLoading, error: searchError } = useQuery(SEARCH, {
+    variables: { text: debouncedSearchQuery },
+    skip: !debouncedSearchQuery.trim(),
+  });
 
   const stats = [
     { value: totalRaised, label: 'Raised in donations', icon: Heart },
@@ -340,7 +348,7 @@ export function LandingPageContent({
             vote, and engage in real conversations.
           </p>
 
-          <HeroSearch router={router} />
+          <HeroSearch router={router} query={searchQuery} onQueryChange={setSearchQuery} />
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-7">
             <Button
@@ -398,6 +406,19 @@ export function LandingPageContent({
           </div>
         </div>
       </section>
+
+      {/* ── Search Results / Page Sections ────────────────────── */}
+      {isSearching ? (
+        <SearchResultsSection
+          query={debouncedSearchQuery}
+          loading={searchLoading}
+          error={searchError}
+          contentResults={(searchData?.searchContent ?? []) as ContentResult[]}
+          creatorResults={(searchData?.searchCreator ?? []) as CreatorResult[]}
+          onResultClick={() => router.push('/dashboard/search')}
+        />
+      ) : (
+        <>
 
       {/* ── Stats Strip ───────────────────────────────────────── */}
       <div
@@ -1665,6 +1686,8 @@ export function LandingPageContent({
           </div>
         </div>
       </footer>
+        </>
+      )}
     </div>
   );
 }
