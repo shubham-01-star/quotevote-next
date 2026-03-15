@@ -50,49 +50,6 @@ interface CreatorResult {
 
 // ── Static data ─────────────────────────────────────────────────────────────
 
-const features = [
-  {
-    num: '01',
-    icon: MessageSquareQuote,
-    title: 'Targeted Feedback',
-    description:
-      'Quote specific text for precise, contextual responses that keep conversations focused and on-point.',
-    accent: '#52b274',
-    bg: 'rgba(82,178,116,0.06)',
-    border: 'rgba(82,178,116,0.20)',
-  },
-  {
-    num: '02',
-    icon: Zap,
-    title: 'Public Chat Threads',
-    description:
-      'Every post spawns its own real-time discussion space. Live, public, and open.',
-    accent: '#27c4e1',
-    bg: 'rgba(39,196,225,0.06)',
-    border: 'rgba(39,196,225,0.20)',
-  },
-  {
-    num: '03',
-    icon: ThumbsUp,
-    title: 'Voting Mechanics',
-    description:
-      'Support thoughtful discourse through democratic, transparent voting on any quoted passage.',
-    accent: '#52b274',
-    bg: 'rgba(82,178,116,0.06)',
-    border: 'rgba(82,178,116,0.20)',
-  },
-  {
-    num: '04',
-    icon: ShieldOff,
-    title: 'Ad-Free & Algorithm-Free',
-    description:
-      'Pure, unmanipulated conversations — no ads, no hidden agendas, no engagement traps.',
-    accent: '#f55145',
-    bg: 'rgba(245,81,69,0.06)',
-    border: 'rgba(245,81,69,0.18)',
-  },
-] as const;
-
 const quickLinks = [
   { href: '/auths/request-access', label: 'Request Invite', external: false },
   { href: '/auths/login', label: 'Login', external: false },
@@ -1686,7 +1643,7 @@ function HeroSearch({ router }: HeroSearchProps) {
 
   const debouncedQuery = useDebounce(query, 300);
 
-  const { data, loading, error } = useQuery(SEARCH, {
+  const { data, loading, error } = useQuery<{ searchContent: ContentResult[]; searchCreator: CreatorResult[] }>(SEARCH, {
     variables: { text: debouncedQuery },
     skip: !debouncedQuery.trim(),
   });

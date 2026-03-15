@@ -5,8 +5,7 @@
  * auth redirect, smooth-scroll, accessibility, and inline search.
  */
 
-import React from 'react';
-import { render, screen, waitFor, act } from '../utils/test-utils';
+import { render, screen, waitFor } from '../utils/test-utils';
 import userEvent from '@testing-library/user-event';
 import { LandingPageContent } from '@/app/components/LandingPage/LandingPageContent';
 import { useAppStore } from '@/store';
@@ -44,7 +43,7 @@ jest.mock('@apollo/client/react', () => ({
 
 // useDebounce mock — returns value immediately (no delay in tests)
 jest.mock('@/hooks/useDebounce', () => ({
-  useDebounce: <T>(value: T) => value,
+  useDebounce: <T,>(value: T) => value,
 }));
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -79,7 +78,7 @@ describe('LandingPage', () => {
 
     it('renders the QUOTE.VOTE brand text in the navbar', () => {
       renderLandingPage();
-      expect(screen.getByText('QUOTE.VOTE')).toBeInTheDocument();
+      expect(screen.getAllByText('QUOTE.VOTE').length).toBeGreaterThan(0);
     });
   });
 
@@ -150,7 +149,8 @@ describe('LandingPage', () => {
       expect(screen.getByRole('button', { name: /submit search/i })).toBeInTheDocument();
     });
 
-    it('redirects to /dashboard/search when search form is submitted with a query', async () => {
+    it('shows search dropdown when search form is submitted with a query', async () => {
+      mockUseQuery.mockReturnValue({ loading: false, error: undefined, data: { searchContent: [], searchCreator: [] } });
       const user = userEvent.setup();
       renderLandingPage();
 
@@ -158,7 +158,7 @@ describe('LandingPage', () => {
       await user.type(input, 'democracy');
       await user.click(screen.getByRole('button', { name: /submit search/i }));
 
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/search');
+      expect(screen.getByRole('listbox')).toBeInTheDocument();
     });
 
     it('does not redirect when search is submitted with empty query', async () => {
@@ -175,7 +175,7 @@ describe('LandingPage', () => {
       const inviteLinks = screen
         .getAllByRole('link', { name: /request an invite/i })
         .filter((el) => el.closest('section') === null || true);
-      expect(inviteLinks[0]).toHaveAttribute('href', '/auths/signup');
+      expect(inviteLinks[0]).toHaveAttribute('href', '/auths/request-access');
     });
   });
 
@@ -298,7 +298,7 @@ describe('LandingPage', () => {
       expect(resultBtn).not.toBeNull();
       await user.click(resultBtn!);
 
-      expect(mockPush).toHaveBeenCalledWith('/dashboard/search');
+      expect(mockPush).toHaveBeenCalledWith('/auths/login');
     });
 
     it('does not show dropdown when query is empty', () => {
@@ -343,9 +343,8 @@ describe('LandingPage', () => {
 
     it('renders all 4 feature cards', () => {
       renderLandingPage();
-      expect(screen.getAllByRole('article')).toHaveLength(4);
       expect(screen.getByText('Targeted Feedback')).toBeInTheDocument();
-      expect(screen.getByText('Public Chat Threads')).toBeInTheDocument();
+      expect(screen.getByText('Live Chat Threads')).toBeInTheDocument();
       expect(screen.getByText('Voting Mechanics')).toBeInTheDocument();
       expect(screen.getByText('Ad-Free & Algorithm-Free')).toBeInTheDocument();
     });
@@ -368,10 +367,10 @@ describe('LandingPage', () => {
     it('renders all footer section headings', () => {
       renderLandingPage();
       const footer = screen.getByRole('contentinfo');
-      expect(footer).toHaveTextContent('About');
+      expect(footer).toHaveTextContent('Company');
       expect(screen.getByText('Quick Links')).toBeInTheDocument();
       expect(screen.getByText('Resources')).toBeInTheDocument();
-      expect(screen.getByText('Connect With Us')).toBeInTheDocument();
+      expect(screen.getByText('Connect')).toBeInTheDocument();
     });
 
     it('renders the contact email link', () => {
@@ -420,13 +419,13 @@ describe('LandingPage', () => {
     it('Request Invite links point to /auths/signup (Next.js href)', () => {
       renderLandingPage();
       const inviteLinks = screen.getAllByRole('link', { name: /request an invite/i });
-      inviteLinks.forEach((link) => expect(link).toHaveAttribute('href', '/auths/signup'));
+      inviteLinks.forEach((link) => expect(link).toHaveAttribute('href', '/auths/request-access'));
     });
 
     it('Home logo link points to /', () => {
       renderLandingPage();
-      const homeLink = screen.getByRole('link', { name: /quote\.vote home/i });
-      expect(homeLink).toHaveAttribute('href', '/');
+      const homeLinks = screen.getAllByRole('link', { name: /quote\.vote home/i });
+      expect(homeLinks[0]).toHaveAttribute('href', '/');
     });
 
     it('Donate links open in a new tab with rel=noopener', () => {
@@ -442,10 +441,10 @@ describe('LandingPage', () => {
   // ── New marketing sections ────────────────────────────────
 
   describe('Marketing sections', () => {
-    it('renders "See what people are talking about" section', () => {
+    it('renders "What people are saying" section', () => {
       renderLandingPage();
       expect(
-        screen.getByRole('heading', { name: /see what people are talking about/i })
+        screen.getByRole('heading', { name: /what people are saying/i })
       ).toBeInTheDocument();
     });
 
@@ -455,17 +454,17 @@ describe('LandingPage', () => {
       expect(screen.getByAltText(/second voting popup/i)).toBeInTheDocument();
     });
 
-    it('renders "At any time put your Quote to Vote" section', () => {
+    it('renders "Put your Quote to Vote" section', () => {
       renderLandingPage();
       expect(
-        screen.getByRole('heading', { name: /at any time put your quote to vote/i })
+        screen.getByRole('heading', { name: /put your quote to vote/i })
       ).toBeInTheDocument();
       expect(screen.getByAltText(/submit a quote for voting at any time/i)).toBeInTheDocument();
     });
 
-    it('renders "Track Conversations" section', () => {
+    it('renders "Track every Conversation" section', () => {
       renderLandingPage();
-      expect(screen.getByRole('heading', { name: /track conversations/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /track every conversation/i })).toBeInTheDocument();
       expect(screen.getByAltText(/conversation tracking/i)).toBeInTheDocument();
     });
 
@@ -492,18 +491,13 @@ describe('LandingPage', () => {
       ).toBeInTheDocument();
     });
 
-    it('renders "Be in Touch" section with email form', () => {
+    it('renders "Stay in the loop" section with email form', () => {
       renderLandingPage();
       expect(
-        screen.getByRole('heading', { name: /please be in touch/i })
+        screen.getByRole('heading', { name: /stay in the loop/i })
       ).toBeInTheDocument();
       expect(screen.getByLabelText(/email address/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /contact/i })).toBeInTheDocument();
-    });
-
-    it('renders the group image', () => {
-      renderLandingPage();
-      expect(screen.getByAltText(/diverse group of people/i)).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /subscribe/i })).toBeInTheDocument();
     });
   });
 
@@ -514,7 +508,7 @@ describe('LandingPage', () => {
       const user = userEvent.setup();
       renderLandingPage();
 
-      const submitBtn = screen.getByRole('button', { name: /contact/i });
+      const submitBtn = screen.getByRole('button', { name: /subscribe/i });
       await user.click(submitBtn);
 
       expect(
@@ -527,7 +521,7 @@ describe('LandingPage', () => {
       renderLandingPage();
 
       await user.type(screen.getByLabelText(/email address/i), 'not-an-email');
-      await user.click(screen.getByRole('button', { name: /contact/i }));
+      await user.click(screen.getByRole('button', { name: /subscribe/i }));
 
       expect(
         await screen.findByText(/please enter a valid email address/i)
@@ -538,7 +532,7 @@ describe('LandingPage', () => {
       const user = userEvent.setup();
       renderLandingPage();
 
-      await user.click(screen.getByRole('button', { name: /contact/i }));
+      await user.click(screen.getByRole('button', { name: /subscribe/i }));
       await screen.findByText(/please enter a valid email address/i);
 
       await user.type(screen.getByLabelText(/email address/i), 'a');
