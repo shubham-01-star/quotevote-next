@@ -10,6 +10,7 @@ import { render, type RenderOptions } from '@testing-library/react';
 import { ApolloClient, InMemoryCache } from '@apollo/client';
 import { ApolloProvider } from '@apollo/client/react';
 import { MockLink, type MockedResponse } from '@apollo/client/testing';
+import { Toaster } from 'sonner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthModalProvider } from '@/context/AuthModalContext';
 import { useAppStore } from '@/store/useAppStore';
@@ -51,6 +52,7 @@ function AllTheProviders({ children, mocks = [] }: AllTheProvidersProps) {
         <ErrorBoundary>
           {children}
         </ErrorBoundary>
+        {typeof Toaster === 'function' && <Toaster />}
       </AuthModalProvider>
     </ApolloProvider>
   );

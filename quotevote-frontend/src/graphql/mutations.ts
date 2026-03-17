@@ -546,6 +546,48 @@ export const ENABLE_USER = gql`
 `
 
 /**
+ * Login mutation — authenticates a user and returns a token + user object.
+ */
+export const LOGIN_MUTATION = gql`
+  mutation login($username: String!, $password: String!) {
+    login(username: $username, password: $password) {
+      token
+      user {
+        _id
+        id
+        username
+        email
+        name
+        avatar
+        admin
+        accountStatus
+      }
+    }
+  }
+`
+
+/**
+ * Register/signup mutation — creates a new user account.
+ */
+export const SIGNUP_MUTATION = gql`
+  mutation register($username: String!, $email: String!, $password: String!) {
+    register(username: $username, email: $email, password: $password) {
+      token
+      user {
+        _id
+        id
+        username
+        email
+        name
+        avatar
+        admin
+        accountStatus
+      }
+    }
+  }
+`
+
+/**
  * Update user profile mutation
  * Used by Settings component for updating user information
  */

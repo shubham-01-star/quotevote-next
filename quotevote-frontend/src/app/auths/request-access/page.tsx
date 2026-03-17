@@ -1,11 +1,15 @@
-import type { Metadata } from 'next';
-import { RequestAccessPageContent } from './PageContent';
+import type { Metadata } from 'next'
+import { Suspense } from 'react'
+import { RequestAccessPageContent } from './PageContent'
 
 export const metadata: Metadata = {
-  title: 'Request Access - Quote.Vote',
-  description: 'Request an invite to join Quote.Vote.',
-};
+  title: 'Request Access — Quote.Vote',
+}
 
 export default function RequestAccessPage() {
-  return <RequestAccessPageContent />;
+  return (
+    <Suspense>
+      <RequestAccessPageContent />
+    </Suspense>
+  )
 }
