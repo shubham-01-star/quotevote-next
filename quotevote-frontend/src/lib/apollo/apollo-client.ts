@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { env } from '@/config/env';
 import { getGraphqlWsServerUrl } from '@/lib/utils/getServerUrl';
 import { serializeObjectIds } from '@/lib/utils/objectIdSerializer';
-import { getToken } from '@/lib/auth';
+import { getToken, removeToken } from '@/lib/auth';
 
 /**
  * Get the GraphQL endpoint URL from validated environment configuration
@@ -190,6 +190,7 @@ function createErrorLink() {
 
         if (code === 'UNAUTHENTICATED') {
           if (typeof window !== 'undefined') {
+            removeToken();
             window.location.href = '/auths/login';
           }
           return;

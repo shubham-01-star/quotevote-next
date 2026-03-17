@@ -17,6 +17,10 @@ import { Button } from '@/components/ui/button'
 
 // Mock fonts
 jest.mock('next/font/google', () => ({
+  Inter: jest.fn(() => ({
+    variable: '--font-sans',
+    className: 'inter',
+  })),
   Geist: jest.fn(() => ({
     variable: '--font-geist-sans',
   })),
