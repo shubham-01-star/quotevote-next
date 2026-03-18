@@ -7,6 +7,7 @@
 
 import { jwtDecode } from 'jwt-decode';
 import type { LoginResponse } from '@/types/login';
+import { env } from '@/config/env';
 
 const TOKEN_KEY = 'token';
 const COOKIE_NAME = 'qv-token';
@@ -48,7 +49,7 @@ export async function loginUser(
     password: string
 ): Promise<LoginResponse> {
     try {
-        const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL;
+        const serverUrl = env.serverUrl;
         const response = await fetch(`${serverUrl}/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

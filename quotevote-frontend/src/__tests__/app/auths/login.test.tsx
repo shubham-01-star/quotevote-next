@@ -1,6 +1,5 @@
-import { render, screen, fireEvent, waitFor, type MockedResponse } from '../../utils/test-utils'
+import { render, screen, fireEvent, waitFor } from '../../utils/test-utils'
 import LoginPageContent from '@/app/auths/login/PageContent'
-import { LOGIN_MUTATION } from '@/graphql/mutations'
 
 const mockPush = jest.fn()
 jest.mock('next/navigation', () => ({
@@ -13,12 +12,20 @@ jest.mock('@/store/useAppStore', () => ({
     selector({ setUserData: jest.fn() }),
 }))
 
+const mockLoginUser = jest.fn()
+jest.mock('@/lib/auth', () => ({
+  loginUser: (...args: unknown[]) => mockLoginUser(...args),
+  setToken: jest.fn(),
+  getToken: jest.fn(),
+  removeToken: jest.fn(),
+}))
+
 describe('LoginPageContent', () => {
   beforeEach(() => jest.clearAllMocks())
 
-  it('renders email and password fields', () => {
+  it('renders username/email and password fields', () => {
     render(<LoginPageContent />)
-    expect(screen.getByLabelText(/email/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/username or email/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/password/i)).toBeInTheDocument()
   })
 
@@ -26,45 +33,55 @@ describe('LoginPageContent', () => {
     render(<LoginPageContent />)
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
     await waitFor(() => {
-      expect(screen.getByText(/email is required/i)).toBeInTheDocument()
+      expect(screen.getByText(/username or email is required/i)).toBeInTheDocument()
     })
   })
 
-  it('calls mutation on valid submit', async () => {
-    const mocks: MockedResponse[] = [
-      {
-        request: {
-          query: LOGIN_MUTATION,
-          variables: { username: 'test@example.com', password: 'password123' },
+  it('calls loginUser on valid submit and redirects', async () => {
+    mockLoginUser.mockResolvedValue({
+      success: true,
+      data: {
+        user: {
+          _id: '1',
+          username: 'test',
+          email: 'test@example.com',
         },
-        result: {
-          data: {
-            login: {
-              token: 'test-token',
-              user: {
-                _id: '1',
-                id: '1',
-                username: 'test',
-                email: 'test@example.com',
-                name: '',
-                avatar: '',
-                admin: false,
-                accountStatus: 'active',
-              },
-            },
-          },
-        },
+        token: 'test-token',
       },
-    ]
-    render(<LoginPageContent />, { mocks })
-    fireEvent.change(screen.getByLabelText(/email/i), {
+    })
+
+    render(<LoginPageContent />)
+    fireEvent.change(screen.getByLabelText(/username or email/i), {
       target: { value: 'test@example.com' },
     })
     fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: 'password123' },
     })
     fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
-    await waitFor(() => expect(mockPush).toHaveBeenCalledWith('/dashboard/search'))
+    await waitFor(() => {
+      expect(mockLoginUser).toHaveBeenCalledWith('test@example.com', 'password123')
+      expect(mockPush).toHaveBeenCalledWith('/dashboard/search')
+    })
+  })
+
+  it('shows error toast on login failure', async () => {
+    const { toast } = jest.requireMock('sonner')
+    mockLoginUser.mockResolvedValue({
+      success: false,
+      error: 'Invalid username or password.',
+    })
+
+    render(<LoginPageContent />)
+    fireEvent.change(screen.getByLabelText(/username or email/i), {
+      target: { value: 'bad@example.com' },
+    })
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: { value: 'wrongpass' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /sign in/i }))
+    await waitFor(() => {
+      expect(toast.error).toHaveBeenCalledWith('Invalid username or password.')
+    })
   })
 
   it('renders forgot password link', () => {
