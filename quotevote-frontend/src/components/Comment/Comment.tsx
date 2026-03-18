@@ -1,11 +1,11 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useMutation } from '@apollo/client/react' // Using /react entry point as per project pattern
 import { Reference } from '@apollo/client'
-import { Smile, Link as LinkIcon, Trash2, Pencil } from 'lucide-react'
-import { CommentInput } from './'
+import { Link as LinkIcon, Trash2 } from 'lucide-react'
+import CommentReactions from './CommentReactions'
 import {
   Card,
   CardContent,
@@ -18,7 +18,7 @@ import { parseCommentDate } from '@/lib/utils/momentUtils'
 import { useAppStore } from '@/store/useAppStore'
 import { toast } from 'sonner'
 import { DELETE_COMMENT } from '@/graphql/mutations'
-import { CommentData } from '@/types/comment'
+import { CommentData, Reaction } from '@/types/comment'
 import useGuestGuard from '@/hooks/useGuestGuard'
 import { cn } from '@/lib/utils'
 
@@ -43,8 +43,6 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
     _id,
   } = comment
   const { username, avatar } = commentUser
-  const [isEditing, setIsEditing] = useState(false)
-
   const router = useRouter()
   const parsedDate = parseCommentDate(new Date(created))
   
@@ -118,49 +116,26 @@ export default function Comment({ comment, postUrl, selected }: CommentProps) {
       </CardHeader>
       
       <CardContent className="px-14 py-2">
-        {isEditing ? (
-          <CommentInput 
-            actionId={(comment.actionId as string) || ""}
-            commentId={_id}
-            initialContent={content}
-            onCancel={() => setIsEditing(false)}
-            onSuccess={() => setIsEditing(false)}
-          />
-        ) : (
-          <p className="text-sm leading-relaxed">{content}</p>
-        )}
+        <p className="text-sm leading-relaxed">{content}</p>
       </CardContent>
 
       <CardFooter className="flex justify-start gap-1 p-2 px-12">
-        {!isEditing && (
-          <>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
-              <Smile className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleCopy}>
-              <LinkIcon className="h-4 w-4" />
-            </Button>
-            {isOwner && (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-muted-foreground hover:bg-muted"
-                  onClick={() => setIsEditing(true)}
-                >
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  onClick={handleDelete}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </>
-            )}
-          </>
+        <CommentReactions
+          actionId={_id}
+          reactions={(comment.reactions as Reaction[]) ?? []}
+        />
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground" onClick={handleCopy}>
+          <LinkIcon className="h-4 w-4" />
+        </Button>
+        {isOwner && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={handleDelete}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         )}
       </CardFooter>
     </Card>

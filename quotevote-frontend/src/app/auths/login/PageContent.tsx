@@ -1,43 +1,29 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { useMutation } from '@apollo/client/react'
-import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
-import { LOGIN_MUTATION } from '@/graphql/mutations'
-import { setToken } from '@/lib/auth'
+import { loginUser } from '@/lib/auth'
 import { useAppStore } from '@/store/useAppStore'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { replaceGqlError } from '@/lib/utils/replaceGqlError'
-import type { AuthUser } from '@/types/auth'
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email is required').email('Invalid email'),
+  email: z.string().min(1, 'Username or email is required'),
   password: z.string().min(1, 'Password is required'),
 })
 type LoginFormData = z.infer<typeof loginSchema>
 
-function SubmitButton() {
-  const { pending } = useFormStatus()
-  return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
-      Sign In
-    </Button>
-  )
-}
-
 export default function LoginPageContent() {
   const router = useRouter()
   const setUserData = useAppStore((s) => s.setUserData)
-  const [loginMutation] = useMutation(LOGIN_MUTATION)
+  const [submitting, setSubmitting] = useState(false)
   const {
     register,
     handleSubmit,
@@ -47,18 +33,19 @@ export default function LoginPageContent() {
   })
 
   const onSubmit = async (values: LoginFormData) => {
+    setSubmitting(true)
     try {
-      const { data } = await loginMutation({
-        variables: { username: values.email, password: values.password },
-      })
-      const result = (data as { login?: { token: string; user: AuthUser } } | undefined)?.login
-      if (result?.token) {
-        setToken(result.token)
-        setUserData(result.user as unknown as Record<string, unknown>)
+      const result = await loginUser(values.email, values.password)
+      if (result.success && result.data) {
+        setUserData(result.data.user as Record<string, unknown>)
         router.push('/dashboard/search')
+      } else {
+        toast.error(result.error || 'Login failed')
       }
-    } catch (error) {
-      toast.error(replaceGqlError(error instanceof Error ? error.message : 'Login failed'))
+    } catch {
+      toast.error('Connection failed. Please try again.')
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -70,8 +57,8 @@ export default function LoginPageContent() {
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" placeholder="you@example.com" {...register('email')} />
+          <Label htmlFor="email">Username or Email</Label>
+          <Input id="email" type="text" placeholder="you@example.com" {...register('email')} />
           {errors.email && <p className="text-sm text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
@@ -84,7 +71,10 @@ export default function LoginPageContent() {
           />
           {errors.password && <p className="text-sm text-destructive">{errors.password.message}</p>}
         </div>
-        <SubmitButton />
+        <Button type="submit" disabled={submitting} className="w-full">
+          {submitting && <Loader2 className="animate-spin mr-2 h-4 w-4" />}
+          Sign In
+        </Button>
       </form>
       <div className="space-y-2 text-center text-sm">
         <Link href="/auths/forgot-password" className="text-primary hover:underline block">

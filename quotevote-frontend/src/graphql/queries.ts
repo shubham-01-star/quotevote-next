@@ -628,7 +628,7 @@ export const GET_CHAT_ROOMS = gql`
  */
 export const SEARCH_USERNAMES = gql`
   query searchUsernames($query: String!) {
-    searchUser(query: $query) {
+    searchUser(queryName: $query) {
       _id
       username
       name
