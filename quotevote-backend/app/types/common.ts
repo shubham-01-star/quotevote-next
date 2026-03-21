@@ -106,19 +106,24 @@ export interface User {
 export interface Post {
   _id: string;
   userId: string;
-  groupId?: string;
-  title?: string;
-  text?: string;
+  groupId: string;
+  title: string;
+  text: string;
   url?: string;
   citationUrl?: string;
   upvotes?: number;
   downvotes?: number;
+  reported?: number;
+  approved?: number;
   approvedBy?: string[];
   rejectedBy?: string[];
   reportedBy?: string[];
   bookmarkedBy?: string[];
+  votedBy?: string[];
   enable_voting?: boolean;
   featuredSlot?: number;
+  messageRoomId?: string;
+  urlId?: string;
   deleted?: boolean;
   created: Date | string;
   updatedAt?: Date | string;
