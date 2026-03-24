@@ -40,8 +40,7 @@ describe('Comment Model', () => {
       // We can spy on Comment.find
       const findSpy = jest.spyOn(Comment, 'find').mockReturnValue({
         sort: jest.fn().mockResolvedValue([]),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      } as unknown as ReturnType<typeof Comment.find>);
 
       await Comment.findByPostId(postId);
 
@@ -57,8 +56,7 @@ describe('Comment Model', () => {
       const userId = new mongoose.Types.ObjectId().toHexString();
       const findSpy = jest.spyOn(Comment, 'find').mockReturnValue({
         sort: jest.fn().mockResolvedValue([]),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } as any);
+      } as unknown as ReturnType<typeof Comment.find>);
 
       await Comment.findByUserId(userId);
 
