@@ -55,7 +55,6 @@ model User {
   presence            Presence?
   typingIndicators    Typing[]
   inviteSent          UserInvite[]    @relation("InviteSender")
-  inviteReceived      UserInvite[]    @relation("InviteRecipient")
   userReportsMade     UserReport[]    @relation("Reporter")
   userReportsReceived UserReport[]    @relation("ReportedUser")
   botReportsMade      BotReport[]     @relation("BotReporter")
@@ -63,6 +62,7 @@ model User {
   createdGroups       Group[]         @relation("GroupCreator")
   memberOfGroups      String[]        @db.ObjectId
   voteLog             VoteLog[]
+  collections         Collection[]
 
   @@index([accountStatus])
   @@index([botReports, lastBotReportDate])
