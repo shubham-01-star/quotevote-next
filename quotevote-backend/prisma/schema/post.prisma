@@ -109,7 +109,7 @@ model Vote {
   type           VoteType
   startWordIndex Int?
   endWordIndex   Int?
-  tags           String
+  tags           String[]
   content        String?
   deleted        Boolean  @default(false)
   created        DateTime @default(now())
@@ -127,18 +127,27 @@ model Vote {
 }
 
 model VoteLog {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  postId  String   @db.ObjectId
-  userId  String   @db.ObjectId
-  type    VoteType
-  created DateTime @default(now())
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  voteId      String   @db.ObjectId
+  postId      String   @db.ObjectId
+  title       String?
+  author      String?
+  description String
+  action      String?
+  type        VoteType
+  tokens      Int
+  created     DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
   user User @relation(fields: [userId], references: [id])
   post Post @relation(fields: [postId], references: [id])
 
-  @@index([postId])
   @@index([userId])
+  @@index([voteId])
+  @@index([postId])
   @@map("votelogs")
 }
 
