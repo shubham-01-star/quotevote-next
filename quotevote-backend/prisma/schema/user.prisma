@@ -35,14 +35,14 @@ model User {
   settings          Json?
   lastLogin         DateTime?
   joined            DateTime      @default(now())
+  createdAt         DateTime      @default(now())
   updated           DateTime      @updatedAt
 
   //Relations
   posts               Post[]
   comments            Comment[]
   votes               Vote[]
-  quotesAsQuoter      Quote[]         @relation("QuoterUser")
-  quotesAsQuoted      Quote[]         @relation("QuotedUser")
+  quotes              Quote[]
   postMessages        PostMessage[]   @relation("PostMessages")
   directMessages      DirectMessage[] @relation("DirectMessages")
   notifications       Notification[]  @relation("NotificationRecipient")
