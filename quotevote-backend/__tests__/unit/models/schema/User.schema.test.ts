@@ -138,7 +138,7 @@ describe('User Schema', () => {
   describe('Instance Method: comparePassword', () => {
     it('should return true for matching password', async () => {
       const plainPassword = 'testpassword123';
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(4);
       const hashedPassword = await bcrypt.hash(plainPassword, salt);
 
       const doc = new User({
@@ -152,7 +152,7 @@ describe('User Schema', () => {
     });
 
     it('should return false for non-matching password', async () => {
-      const salt = await bcrypt.genSalt(10);
+      const salt = await bcrypt.genSalt(4);
       const hashedPassword = await bcrypt.hash('correctpassword', salt);
 
       const doc = new User({

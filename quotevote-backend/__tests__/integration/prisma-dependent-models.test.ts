@@ -13,6 +13,25 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// Typed delete functions for cleanup — no `any` needed
+const deleteFns: Record<string, (id: string) => Promise<unknown>> = {
+  user: (id) => prisma.user.delete({ where: { id } }),
+  group: (id) => prisma.group.delete({ where: { id } }),
+  post: (id) => prisma.post.delete({ where: { id } }),
+  comment: (id) => prisma.comment.delete({ where: { id } }),
+  quote: (id) => prisma.quote.delete({ where: { id } }),
+  vote: (id) => prisma.vote.delete({ where: { id } }),
+  voteLog: (id) => prisma.voteLog.delete({ where: { id } }),
+  reaction: (id) => prisma.reaction.delete({ where: { id } }),
+  message: (id) => prisma.message.delete({ where: { id } }),
+  messageRoom: (id) => prisma.messageRoom.delete({ where: { id } }),
+  presence: (id) => prisma.presence.delete({ where: { id } }),
+  roster: (id) => prisma.roster.delete({ where: { id } }),
+  typing: (id) => prisma.typing.delete({ where: { id } }),
+  userReport: (id) => prisma.userReport.delete({ where: { id } }),
+  activity: (id) => prisma.activity.delete({ where: { id } }),
+};
+
 // Track created IDs for cleanup
 const cleanup: { model: string; id: string }[] = [];
 
@@ -70,7 +89,8 @@ afterAll(async () => {
   // Cleanup in reverse creation order
   for (const { model, id } of cleanup) {
     try {
-      await (prisma as any)[model].delete({ where: { id } });
+      const deleteFn = deleteFns[model];
+      if (deleteFn) await deleteFn(id);
     } catch {
       // Already deleted or doesn't exist — ignore
     }
@@ -284,9 +304,9 @@ describe('Vote Model & Relations', () => {
 });
 
 // ============================================================================
-// 6. MessageRoom + PostMessage → User relationships
+// 6. MessageRoom + Message → User relationships
 // ============================================================================
-describe('MessageRoom & PostMessage Relations', () => {
+describe('MessageRoom & Message Relations', () => {
   it('should create a message room and messages', async () => {
     const user = await createTestUser('msguser');
 
@@ -299,14 +319,14 @@ describe('MessageRoom & PostMessage Relations', () => {
     });
     track('messageRoom', room.id);
 
-    const msg = await prisma.postMessage.create({
+    const msg = await prisma.message.create({
       data: {
         messageRoomId: room.id,
         userId: user.id,
         text: 'Hello world',
       },
     });
-    track('postMessage', msg.id);
+    track('message', msg.id);
 
     expect(msg.text).toBe('Hello world');
     expect(msg.deleted).toBe(false);
@@ -320,25 +340,25 @@ describe('MessageRoom & PostMessage Relations', () => {
     });
     track('messageRoom', room.id);
 
-    const m1 = await prisma.postMessage.create({
+    const m1 = await prisma.message.create({
       data: { messageRoomId: room.id, userId: user.id, text: 'Msg 1' },
     });
-    const m2 = await prisma.postMessage.create({
+    const m2 = await prisma.message.create({
       data: { messageRoomId: room.id, userId: user.id, text: 'Msg 2' },
     });
-    track('postMessage', m1.id);
-    track('postMessage', m2.id);
+    track('message', m1.id);
+    track('message', m2.id);
 
     const roomWithMessages = await prisma.messageRoom.findUnique({
       where: { id: room.id },
-      include: { postMessages: true },
+      include: { messages: true },
     });
-    expect(roomWithMessages!.postMessages.length).toBe(2);
+    expect(roomWithMessages!.messages.length).toBe(2);
   });
 });
 
 // ============================================================================
-// 7. Reaction → PostMessage, User
+// 7. Reaction → Message, User
 // ============================================================================
 describe('Reaction Model & Relations', () => {
   it('should create a reaction on a message', async () => {
@@ -348,13 +368,13 @@ describe('Reaction Model & Relations', () => {
     });
     track('messageRoom', room.id);
 
-    const msg = await prisma.postMessage.create({
+    const msg = await prisma.message.create({
       data: { messageRoomId: room.id, userId: user.id, text: 'React to this' },
     });
-    track('postMessage', msg.id);
+    track('message', msg.id);
 
     const reaction = await prisma.reaction.create({
-      data: { userId: user.id, postMessageId: msg.id, emoji: '👍' },
+      data: { userId: user.id, messageId: msg.id, emoji: '👍' },
     });
     track('reaction', reaction.id);
 
@@ -368,17 +388,17 @@ describe('Reaction Model & Relations', () => {
     });
     track('messageRoom', room.id);
 
-    const msg = await prisma.postMessage.create({
+    const msg = await prisma.message.create({
       data: { messageRoomId: room.id, userId: user.id, text: 'Reactions test' },
     });
-    track('postMessage', msg.id);
+    track('message', msg.id);
 
     const r = await prisma.reaction.create({
-      data: { userId: user.id, postMessageId: msg.id, emoji: '❤️' },
+      data: { userId: user.id, messageId: msg.id, emoji: '❤️' },
     });
     track('reaction', r.id);
 
-    const msgWithReactions = await prisma.postMessage.findUnique({
+    const msgWithReactions = await prisma.message.findUnique({
       where: { id: msg.id },
       include: { reactions: true },
     });
@@ -629,28 +649,28 @@ describe('Deep Nested Relationship Traversal', () => {
     });
     track('messageRoom', room.id);
 
-    const msg = await prisma.postMessage.create({
+    const msg = await prisma.message.create({
       data: { messageRoomId: room.id, userId: user.id, text: 'Deep message' },
     });
-    track('postMessage', msg.id);
+    track('message', msg.id);
 
     const reaction = await prisma.reaction.create({
-      data: { userId: user.id, postMessageId: msg.id, emoji: '🔥' },
+      data: { userId: user.id, messageId: msg.id, emoji: '🔥' },
     });
     track('reaction', reaction.id);
 
     const roomDeep = await prisma.messageRoom.findUnique({
       where: { id: room.id },
       include: {
-        postMessages: {
+        messages: {
           include: { reactions: true },
         },
       },
     });
 
-    expect(roomDeep!.postMessages.length).toBe(1);
-    expect(roomDeep!.postMessages[0].reactions.length).toBe(1);
-    expect(roomDeep!.postMessages[0].reactions[0].emoji).toBe('🔥');
+    expect(roomDeep!.messages.length).toBe(1);
+    expect(roomDeep!.messages[0].reactions.length).toBe(1);
+    expect(roomDeep!.messages[0].reactions[0].emoji).toBe('🔥');
   });
 });
 

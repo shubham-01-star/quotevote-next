@@ -84,6 +84,15 @@ model BotReport {
   @@map("botreports")
 }
 
+// Composite type for embedded reputation on User documents
+type EmbeddedReputation {
+  overallScore       Float?             @default(0)
+  inviteNetworkScore Float?             @default(0)
+  conductScore       Float?             @default(0)
+  activityScore      Float?             @default(0)
+  metrics            ReputationMetrics?
+}
+
 // Composite type for reputation metrics
 type ReputationMetrics {
   totalInvitesSent         Int   @default(0)

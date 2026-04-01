@@ -8,6 +8,7 @@
     "build": "tsc",
     "start": "node dist/app/server.js",
     "test": "jest --passWithNoTests",
+    "test:prisma": "jest --testPathPattern='prisma-.*\\.test\\.ts$' --testPathIgnorePatterns='[]'",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
