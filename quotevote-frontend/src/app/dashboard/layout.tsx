@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -41,6 +41,8 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
 
 /* ------------------------------------------------------------------ */
 /*  Constants                                                          */
@@ -104,6 +106,8 @@ export default function DashboardLayout({
 
   const user = useAppStore((s) => s.user.data);
   const logout = useAppStore((s) => s.logout);
+
+  const [submitDialogOpen, setSubmitDialogOpen] = useState(false);
 
   const loggedIn = !!(user?.id || user?._id);
   const isAdmin = !!user?.admin;
@@ -202,18 +206,19 @@ export default function DashboardLayout({
             </Link>
 
             {/* Create */}
-            <Link
-              href="/dashboard/post"
+            <button
+              type="button"
+              onClick={() => setSubmitDialogOpen(true)}
               className={cn(
-                'transition-colors rounded-md border p-0.5',
-                isActive('/dashboard/post')
+                'transition-colors rounded-md border p-0.5 bg-transparent cursor-pointer',
+                submitDialogOpen
                   ? 'text-foreground border-foreground'
                   : 'text-muted-foreground border-muted-foreground/40 hover:text-foreground hover:border-foreground'
               )}
               aria-label="Create post"
             >
               <PlusSquare className="size-5" />
-            </Link>
+            </button>
 
             {/* Notifications */}
             <Link
@@ -423,18 +428,17 @@ export default function DashboardLayout({
           </Link>
 
           {/* Create */}
-          <Link
-            href="/dashboard/post"
+          <button
+            type="button"
+            onClick={() => setSubmitDialogOpen(true)}
             className={cn(
-              'flex items-center justify-center flex-1 h-full transition-colors',
-              isActive('/dashboard/post')
-                ? 'text-foreground'
-                : 'text-muted-foreground'
+              'flex items-center justify-center flex-1 h-full transition-colors bg-transparent border-0 cursor-pointer',
+              submitDialogOpen ? 'text-foreground' : 'text-muted-foreground'
             )}
             aria-label="Create post"
           >
             <PlusSquare className="size-6" />
-          </Link>
+          </button>
 
           {/* Notifications */}
           <Link
@@ -496,6 +500,13 @@ export default function DashboardLayout({
       {/* ── Overlays ── */}
       <ChatPanel />
       <RequestInviteDialog open={isModalOpen} onClose={closeAuthModal} />
+
+      {/* Create Quote Dialog */}
+      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
+        <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <SubmitPost setOpen={setSubmitDialogOpen} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
