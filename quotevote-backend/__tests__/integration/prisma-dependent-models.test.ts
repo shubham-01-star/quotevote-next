@@ -24,12 +24,21 @@ const deleteFns: Record<string, (id: string) => Promise<unknown>> = {
   voteLog: (id) => prisma.voteLog.delete({ where: { id } }),
   reaction: (id) => prisma.reaction.delete({ where: { id } }),
   message: (id) => prisma.message.delete({ where: { id } }),
+  directMessage: (id) => prisma.directMessage.delete({ where: { id } }),
   messageRoom: (id) => prisma.messageRoom.delete({ where: { id } }),
+  notification: (id) => prisma.notification.delete({ where: { id } }),
   presence: (id) => prisma.presence.delete({ where: { id } }),
   roster: (id) => prisma.roster.delete({ where: { id } }),
   typing: (id) => prisma.typing.delete({ where: { id } }),
+  userInvite: (id) => prisma.userInvite.delete({ where: { id } }),
   userReport: (id) => prisma.userReport.delete({ where: { id } }),
+  botReport: (id) => prisma.botReport.delete({ where: { id } }),
+  userReputation: (id) => prisma.userReputation.delete({ where: { id } }),
   activity: (id) => prisma.activity.delete({ where: { id } }),
+  domain: (id) => prisma.domain.delete({ where: { id } }),
+  creator: (id) => prisma.creator.delete({ where: { id } }),
+  content: (id) => prisma.content.delete({ where: { id } }),
+  collection: (id) => prisma.collection.delete({ where: { id } }),
 };
 
 // Track created IDs for cleanup
@@ -81,8 +90,37 @@ async function createTestPost(userId: string, groupId: string) {
   return post;
 }
 
+// Replica-set guard — Prisma requires MongoDB replica sets for create/update/delete
+// (transactions). Detect a non-replica-set mongod up front and fail fast with a
+// readable error instead of a cryptic mid-suite P2031.
 beforeAll(async () => {
   await prisma.$connect();
+
+  const stamp = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  try {
+    const probe = await prisma.user.create({
+      data: {
+        email: `replica-probe-${stamp}@internal.test`,
+        username: `replica_probe_${stamp}`,
+        accountStatus: 'active',
+      },
+    });
+    track('user', probe.id);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    if (/replica set/i.test(msg) || /P2031/.test(msg)) {
+      throw new Error(
+        '\n\n⚠️  MongoDB is not running as a replica set.\n' +
+          '   Prisma requires a replica set for create/update/delete (transactions).\n' +
+          '   Fix (fastest): docker run -d --name mongo-rs -p 27017:27017 \\\n' +
+          '                      mongo:7 --replSet rs0 --bind_ip_all\n' +
+          '                  docker exec -it mongo-rs mongosh --eval "rs.initiate()"\n' +
+          '   Then update DATABASE_URL to include ?replicaSet=rs0&directConnection=true\n' +
+          '   See docs/prisma-migration-strategy.md for all options.\n',
+      );
+    }
+    throw err;
+  }
 });
 
 afterAll(async () => {
@@ -711,5 +749,481 @@ describe('Activity Model & Relations', () => {
       include: { activities: true },
     });
     expect(userWithActivities!.activities.length).toBe(1);
+  });
+});
+
+// ============================================================================
+// 14. VoteLog → User, Post, Vote
+// ============================================================================
+describe('VoteLog Model & Relations', () => {
+  it('should create a vote log entry', async () => {
+    const user = await createTestUser('vloguser');
+    const group = await createTestGroup(user.id);
+    const post = await createTestPost(user.id, group.id);
+    const vote = await prisma.vote.create({
+      data: { userId: user.id, postId: post.id, type: 'up' },
+    });
+    track('vote', vote.id);
+
+    const log = await prisma.voteLog.create({
+      data: {
+        userId: user.id,
+        voteId: vote.id,
+        postId: post.id,
+        description: 'User cast an upvote',
+        type: 'up',
+        tokens: 1,
+      },
+    });
+    track('voteLog', log.id);
+
+    expect(log.voteId).toBe(vote.id);
+    expect(log.tokens).toBe(1);
+  });
+
+  it('should query user → voteLog relation', async () => {
+    const user = await createTestUser('vlogrel');
+    const group = await createTestGroup(user.id);
+    const post = await createTestPost(user.id, group.id);
+    const vote = await prisma.vote.create({
+      data: { userId: user.id, postId: post.id, type: 'down' },
+    });
+    track('vote', vote.id);
+    const log = await prisma.voteLog.create({
+      data: {
+        userId: user.id,
+        voteId: vote.id,
+        postId: post.id,
+        description: 'downvote',
+        type: 'down',
+        tokens: 1,
+      },
+    });
+    track('voteLog', log.id);
+
+    const userWithLogs = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { voteLog: true },
+    });
+    expect(userWithLogs!.voteLog.length).toBe(1);
+  });
+});
+
+// ============================================================================
+// 15. DirectMessage → User
+// ============================================================================
+describe('DirectMessage Model & Relations', () => {
+  it('should create a direct message for a user', async () => {
+    const user = await createTestUser('dmuser');
+    const dm = await prisma.directMessage.create({
+      data: { userId: user.id, text: 'Direct hello', title: 'DM' },
+    });
+    track('directMessage', dm.id);
+
+    expect(dm.text).toBe('Direct hello');
+  });
+
+  it('should query user → directMessages relation', async () => {
+    const user = await createTestUser('dmrel');
+    const dm = await prisma.directMessage.create({
+      data: { userId: user.id, text: 'DM 1' },
+    });
+    track('directMessage', dm.id);
+
+    const userWithDms = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { directMessages: true },
+    });
+    expect(userWithDms!.directMessages.length).toBe(1);
+  });
+});
+
+// ============================================================================
+// 16. Notification → User (recipient + sender), Post
+// ============================================================================
+describe('Notification Model & Relations', () => {
+  it('should create a notification', async () => {
+    const recipient = await createTestUser('notifrec');
+    const sender = await createTestUser('notifsend');
+    const group = await createTestGroup(sender.id);
+    const post = await createTestPost(sender.id, group.id);
+
+    const notif = await prisma.notification.create({
+      data: {
+        userId: recipient.id,
+        userIdBy: sender.id,
+        label: 'upvoted your post',
+        notificationType: 'UPVOTED',
+        postId: post.id,
+      },
+    });
+    track('notification', notif.id);
+
+    expect(notif.status).toBe('new');
+  });
+
+  it('should query sender and recipient relations', async () => {
+    const recipient = await createTestUser('notifrel1');
+    const sender = await createTestUser('notifrel2');
+
+    const n = await prisma.notification.create({
+      data: {
+        userId: recipient.id,
+        userIdBy: sender.id,
+        label: 'followed you',
+        notificationType: 'FOLLOW',
+      },
+    });
+    track('notification', n.id);
+
+    const full = await prisma.notification.findUnique({
+      where: { id: n.id },
+      include: { user: true, sender: true },
+    });
+    expect(full!.user.id).toBe(recipient.id);
+    expect(full!.sender.id).toBe(sender.id);
+  });
+});
+
+// ============================================================================
+// 17. UserInvite → User (optional sender)
+// ============================================================================
+describe('UserInvite Model & Relations', () => {
+  it('should create an invite with status defaults', async () => {
+    const inviter = await createTestUser('inviter');
+    const invite = await prisma.userInvite.create({
+      data: {
+        email: `invitee-${Date.now()}@test.com`,
+        invitedById: inviter.id,
+        code: `CODE-${Date.now()}`,
+      },
+    });
+    track('userInvite', invite.id);
+
+    expect(invite.status).toBe('pending');
+  });
+
+  it('should query inviter → inviteSent relation', async () => {
+    const inviter = await createTestUser('inviterrel');
+    const inv = await prisma.userInvite.create({
+      data: {
+        email: `invitee2-${Date.now()}@test.com`,
+        invitedById: inviter.id,
+      },
+    });
+    track('userInvite', inv.id);
+
+    const withInvites = await prisma.user.findUnique({
+      where: { id: inviter.id },
+      include: { inviteSent: true },
+    });
+    expect(withInvites!.inviteSent.length).toBe(1);
+  });
+});
+
+// ============================================================================
+// 18. BotReport → User (reporter + reported)
+// ============================================================================
+describe('BotReport Model & Relations', () => {
+  it('should create a bot report', async () => {
+    const reporter = await createTestUser('botreprt');
+    const reported = await createTestUser('botrepd');
+
+    const r = await prisma.botReport.create({
+      data: { reporterId: reporter.id, userId: reported.id },
+    });
+    track('botReport', r.id);
+
+    expect(r.reporterId).toBe(reporter.id);
+    expect(r.userId).toBe(reported.id);
+  });
+
+  it('should enforce unique (reporterId, userId) constraint', async () => {
+    const reporter = await createTestUser('botuniq1');
+    const reported = await createTestUser('botuniq2');
+
+    const r = await prisma.botReport.create({
+      data: { reporterId: reporter.id, userId: reported.id },
+    });
+    track('botReport', r.id);
+
+    await expect(
+      prisma.botReport.create({
+        data: { reporterId: reporter.id, userId: reported.id },
+      })
+    ).rejects.toThrow();
+  });
+
+  it('should query user → botReportsMade/botReportsReceived', async () => {
+    const reporter = await createTestUser('botrel1');
+    const reported = await createTestUser('botrel2');
+    const r = await prisma.botReport.create({
+      data: { reporterId: reporter.id, userId: reported.id },
+    });
+    track('botReport', r.id);
+
+    const made = await prisma.user.findUnique({
+      where: { id: reporter.id },
+      include: { botReportsMade: true },
+    });
+    const received = await prisma.user.findUnique({
+      where: { id: reported.id },
+      include: { botReportsReceived: true },
+    });
+    expect(made!.botReportsMade.length).toBe(1);
+    expect(received!.botReportsReceived.length).toBe(1);
+  });
+});
+
+// ============================================================================
+// 19. UserReputation → User (1-to-1)
+// ============================================================================
+describe('UserReputation Model & Relations', () => {
+  it('should create a reputation record with embedded metrics', async () => {
+    const user = await createTestUser('repuser');
+    const rep = await prisma.userReputation.create({
+      data: {
+        userId: user.id,
+        overallScore: 75,
+        inviteNetworkScore: 10,
+        conductScore: 30,
+        activityScore: 35,
+        metrics: {
+          totalInvitesSent: 5,
+          totalInvitesAccepted: 3,
+          totalInvitesDeclined: 1,
+          averageInviteeReputation: 50,
+          totalReportsReceived: 0,
+          totalReportsResolved: 0,
+          totalUpvotes: 20,
+          totalDownvotes: 2,
+          totalPosts: 4,
+          totalComments: 15,
+        },
+      },
+    });
+    track('userReputation', rep.id);
+
+    expect(rep.overallScore).toBe(75);
+    expect(rep.metrics.totalInvitesSent).toBe(5);
+  });
+
+  it('should enforce unique userId constraint', async () => {
+    const user = await createTestUser('repuniq');
+    const rep = await prisma.userReputation.create({
+      data: {
+        userId: user.id,
+        overallScore: 10,
+        inviteNetworkScore: 0,
+        conductScore: 0,
+        activityScore: 0,
+        metrics: {
+          totalInvitesSent: 0,
+          totalInvitesAccepted: 0,
+          totalInvitesDeclined: 0,
+          averageInviteeReputation: 0,
+          totalReportsReceived: 0,
+          totalReportsResolved: 0,
+          totalUpvotes: 0,
+          totalDownvotes: 0,
+          totalPosts: 0,
+          totalComments: 0,
+        },
+      },
+    });
+    track('userReputation', rep.id);
+
+    await expect(
+      prisma.userReputation.create({
+        data: {
+          userId: user.id,
+          overallScore: 20,
+          inviteNetworkScore: 0,
+          conductScore: 0,
+          activityScore: 0,
+          metrics: {
+            totalInvitesSent: 0,
+            totalInvitesAccepted: 0,
+            totalInvitesDeclined: 0,
+            averageInviteeReputation: 0,
+            totalReportsReceived: 0,
+            totalReportsResolved: 0,
+            totalUpvotes: 0,
+            totalDownvotes: 0,
+            totalPosts: 0,
+            totalComments: 0,
+          },
+        },
+      })
+    ).rejects.toThrow();
+  });
+});
+
+// ============================================================================
+// 20. Domain → Content
+// ============================================================================
+describe('Domain / Creator / Content / Collection Models', () => {
+  it('should create a Domain and Content linked via relation', async () => {
+    const domain = await prisma.domain.create({
+      data: { key: `domain_${Date.now()}`, name: 'Example' },
+    });
+    track('domain', domain.id);
+
+    const creator = await prisma.creator.create({
+      data: { name: `Creator ${Date.now()}`, bio: 'Bio' },
+    });
+    track('creator', creator.id);
+
+    const content = await prisma.content.create({
+      data: {
+        title: 'Linked content',
+        creatorId: creator.id,
+        domainId: domain.id,
+        url: 'https://example.com',
+      },
+    });
+    track('content', content.id);
+
+    const full = await prisma.content.findUnique({
+      where: { id: content.id },
+      include: { creator: true, domain: true },
+    });
+    expect(full!.creator.id).toBe(creator.id);
+    expect(full!.domain!.id).toBe(domain.id);
+
+    // Domain → contents reverse relation
+    const domainFull = await prisma.domain.findUnique({
+      where: { id: domain.id },
+      include: { contents: true },
+    });
+    expect(domainFull!.contents.length).toBe(1);
+  });
+
+  it('should create a Collection linked to a user', async () => {
+    const user = await createTestUser('colluser');
+    const group = await createTestGroup(user.id);
+    const post = await createTestPost(user.id, group.id);
+
+    const coll = await prisma.collection.create({
+      data: {
+        userId: user.id,
+        name: `Collection ${Date.now()}`,
+        description: 'Test collection',
+        postIds: [post.id],
+      },
+    });
+    track('collection', coll.id);
+
+    const withColl = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: { collections: true },
+    });
+    expect(withColl!.collections.length).toBe(1);
+    expect(withColl!.collections[0].postIds).toContain(post.id);
+  });
+});
+
+// ============================================================================
+// 21. Deeper traversal — 3-level includes
+// ============================================================================
+describe('3-Level Deep Relationship Traversal', () => {
+  it('should traverse user → posts → comments → commenter (back to user)', async () => {
+    const author = await createTestUser('deep3a');
+    const commenter = await createTestUser('deep3b');
+    const group = await createTestGroup(author.id);
+    const post = await createTestPost(author.id, group.id);
+
+    const comment = await prisma.comment.create({
+      data: { userId: commenter.id, postId: post.id, content: 'Deep comment' },
+    });
+    track('comment', comment.id);
+
+    const authorDeep = await prisma.user.findUnique({
+      where: { id: author.id },
+      include: {
+        posts: {
+          include: {
+            comments: {
+              include: { user: true },
+            },
+          },
+        },
+      },
+    });
+
+    expect(authorDeep!.posts[0].comments.length).toBe(1);
+    expect(authorDeep!.posts[0].comments[0].user.id).toBe(commenter.id);
+    expect(authorDeep!.posts[0].comments[0].user.username).toBe(commenter.username);
+  });
+
+  it('should traverse user → rooms → messages → reactions → reactor', async () => {
+    const user = await createTestUser('deep3msg');
+    const reactor = await createTestUser('deep3react');
+    const room = await prisma.messageRoom.create({
+      data: { userIds: [user.id, reactor.id], messageType: 'USER' },
+    });
+    track('messageRoom', room.id);
+
+    const msg = await prisma.message.create({
+      data: { messageRoomId: room.id, userId: user.id, text: 'hi' },
+    });
+    track('message', msg.id);
+
+    const reaction = await prisma.reaction.create({
+      data: { userId: reactor.id, messageId: msg.id, emoji: '✨' },
+    });
+    track('reaction', reaction.id);
+
+    const roomDeep = await prisma.messageRoom.findUnique({
+      where: { id: room.id },
+      include: {
+        messages: {
+          include: {
+            reactions: {
+              include: { user: true },
+            },
+          },
+        },
+      },
+    });
+
+    expect(roomDeep!.messages[0].reactions[0].user.id).toBe(reactor.id);
+    expect(roomDeep!.messages[0].reactions[0].user.username).toBe(reactor.username);
+  });
+});
+
+// ============================================================================
+// 22. Smoke — all 24 model delegates exist and are countable
+// ============================================================================
+describe('All 24 models — delegate smoke test', () => {
+  it('should have working count() on every model', async () => {
+    const counts = await Promise.all([
+      prisma.user.count(),
+      prisma.group.count(),
+      prisma.post.count(),
+      prisma.comment.count(),
+      prisma.quote.count(),
+      prisma.vote.count(),
+      prisma.voteLog.count(),
+      prisma.reaction.count(),
+      prisma.message.count(),
+      prisma.directMessage.count(),
+      prisma.messageRoom.count(),
+      prisma.notification.count(),
+      prisma.activity.count(),
+      prisma.roster.count(),
+      prisma.presence.count(),
+      prisma.typing.count(),
+      prisma.userInvite.count(),
+      prisma.userReport.count(),
+      prisma.botReport.count(),
+      prisma.userReputation.count(),
+      prisma.domain.count(),
+      prisma.creator.count(),
+      prisma.content.count(),
+      prisma.collection.count(),
+    ]);
+    expect(counts).toHaveLength(24);
+    counts.forEach((c) => expect(typeof c).toBe('number'));
   });
 });
