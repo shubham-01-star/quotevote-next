@@ -492,7 +492,19 @@ export default function DashboardLayout({
 
       {/* ── Main content ── */}
       <main id="main-content" className="min-h-screen pt-14 md:pt-16 pb-16 md:pb-0">
-        <div className="mx-auto px-4" style={{ maxWidth: pathname.startsWith('/dashboard/explore') ? 'none' : '42rem' }}>
+        <div
+          className={cn(
+            'mx-auto px-4',
+            pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12'
+          )}
+          style={{
+            maxWidth: pathname.startsWith('/dashboard/explore')
+              ? 'none'
+              : pathname.startsWith('/dashboard/post/')
+                ? '1170px'
+                : '42rem',
+          }}
+        >
           {children}
         </div>
       </main>
