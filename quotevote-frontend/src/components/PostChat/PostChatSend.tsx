@@ -55,13 +55,14 @@ export default function PostChatSend({ messageRoomId, title, postId }: PostChatS
     }
 
     const dateSubmitted = new Date()
+    const tempId = Array.from({ length: 24 }, () => Math.floor(Math.random() * 16).toString(16)).join('')
 
     await createMessage({
       variables: { message },
       optimisticResponse: {
         createMessage: {
           __typename: 'Message' as const,
-          _id: dateSubmitted.toISOString(),
+          _id: tempId,
           messageRoomId: messageRoomId || '',
           userName: (user.name as string) || '',
           userId: ((user._id || user.id) as string) || '',

@@ -80,6 +80,7 @@ export default function PostActionCard({
 
   const { loading, data } = useQuery<ActionReactionsData>(GET_ACTION_REACTIONS, {
     variables: { actionId: _id },
+    skip: type === 'Message',
   })
   const actionReactions = (!loading && data?.actionReactions) || []
 
