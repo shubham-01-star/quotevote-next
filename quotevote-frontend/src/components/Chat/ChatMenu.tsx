@@ -46,6 +46,7 @@ const ChatMenu: FC<ChatMenuProps> = ({ fontSize = 'medium' }) => {
         onClose={() => setChatOpen(false)}
         title="Chat"
         anchor="right"
+        showHeader={false}
       >
         <ChatContent />
       </MobileDrawer>
