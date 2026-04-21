@@ -173,7 +173,7 @@ function ChatContent() {
             <Button
               size="icon"
               variant="outline"
-              className="flex-shrink-0 border-white/40 bg-white/20 text-white hover:bg-white/30"
+              className="flex-shrink-0 mr-1 border-white/40 bg-white/20 text-white hover:bg-white/30"
               onClick={() => setStatusEditorOpen(true)}
               aria-label="Set status"
             >
