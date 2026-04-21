@@ -209,32 +209,33 @@ export default function DashboardLayout({
       <header className="fixed top-0 left-0 right-0 z-50 hidden md:flex h-[60px] bg-white shadow-[0_2px_4px_rgba(0,0,0,0.10)] items-center">
         <div className="flex h-full w-full items-center px-4 gap-2">
 
-          {/* ── Left: Logo ── */}
-          <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
-            <Image
-              src="/icons/android-chrome-192x192.png"
-              alt="Quote.Vote"
-              width={36}
-              height={36}
-              className="object-contain rounded-full"
-              crossOrigin="anonymous"
-            />
-            <span className="hidden lg:block text-[20px] font-extrabold tracking-tight text-[#52b274] select-none">
-              Quote.Vote
-            </span>
-          </Link>
-
-          {/* ── Center: Search ── */}
-          <div className="flex-1 flex justify-center px-4">
+          {/* ── Left: Logo + Search ── */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Link href="/dashboard/explore" className="flex items-center gap-2 no-underline flex-shrink-0">
+              <Image
+                src="/icons/android-chrome-192x192.png"
+                alt="Quote.Vote"
+                width={36}
+                height={36}
+                className="object-contain rounded-full"
+                crossOrigin="anonymous"
+              />
+              <span className="hidden lg:block text-[20px] font-extrabold tracking-tight text-[#52b274] select-none">
+                Quote.Vote
+              </span>
+            </Link>
             <Suspense fallback={
               <div className="flex items-center gap-2 h-[38px] w-[220px] rounded-full px-3.5 bg-[#f0f2f5]">
                 <Search className="size-[15px] text-gray-400" />
-                <span className="text-[13px] text-gray-400">Search Quote.Vote…</span>
+                <span className="text-[13px] text-gray-400">Search…</span>
               </div>
             }>
               <NavSearch />
             </Suspense>
           </div>
+
+          {/* ── Spacer ── */}
+          <div className="flex-1" />
 
           {/* ── Right: Actions ── */}
           <div className="flex items-center gap-2 flex-shrink-0">
