@@ -34,6 +34,7 @@ export const GET_ROOM_MESSAGES = gql`
         text
         created
         type
+        readBy
         user {
           _id
           name
