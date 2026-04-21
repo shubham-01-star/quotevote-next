@@ -4,7 +4,6 @@ import { useState, useMemo, KeyboardEvent, ChangeEvent } from 'react';
 import { useMutation, useQuery } from '@apollo/client/react';
 import { Send, Loader2 } from 'lucide-react';
 
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { useAppStore } from '@/store';
 import { toast } from 'sonner';
@@ -255,9 +254,9 @@ export default function MessageSend({
           isSending && 'opacity-70'
         )}
       >
-        <Textarea
+        <textarea
           aria-label="message input"
-          className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-[0.9375rem] leading-[1.5] shadow-none focus-visible:ring-0"
+          className="min-h-[40px] max-h-[140px] flex-1 resize-none border-0 bg-transparent p-0 text-[0.9375rem] leading-[1.5] outline-none focus:outline-none focus-visible:outline-none placeholder:text-muted-foreground"
           placeholder={placeholder}
           value={text}
           disabled={isBlocked || isSending}
