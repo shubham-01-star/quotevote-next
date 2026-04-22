@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
@@ -59,7 +59,7 @@ export default function SettingsPageClient() {
   const isAdmin = Boolean(userData?.admin)
 
   const [localDarkMode, setLocalDarkMode] = useState(isDarkMode)
-  const originalDarkMode = useRef(isDarkMode)
+  const [originalDarkMode, setOriginalDarkMode] = useState(isDarkMode)
 
   const [updateUser, { loading }] = useMutation<UpdateUserResponse>(UPDATE_USER)
 
@@ -73,7 +73,7 @@ export default function SettingsPageClient() {
     setLocalDarkMode(newMode === 'dark')
   }, [toggleTheme])
 
-  const themeDirty = localDarkMode !== originalDarkMode.current
+  const themeDirty = localDarkMode !== originalDarkMode
   const isFormDirty = form.formState.isDirty || themeDirty
 
   const handleSignOut = useCallback(() => {
@@ -105,7 +105,7 @@ export default function SettingsPageClient() {
           ...otherValues,
           themePreference: localDarkMode ? 'dark' : 'light',
         })
-        originalDarkMode.current = localDarkMode
+        setOriginalDarkMode(localDarkMode)
         toast.success('Settings saved successfully')
         form.reset({ ...otherValues, password: '' })
       }
