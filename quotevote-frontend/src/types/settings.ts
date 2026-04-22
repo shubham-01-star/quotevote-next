@@ -36,6 +36,6 @@ export interface SettingsUserData {
   name?: string
   avatar?: UserAvatar | string
   admin?: boolean
-  _followingId?: string
+  _followingId?: string[]
   [key: string]: unknown
 }

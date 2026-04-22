@@ -50,8 +50,8 @@ export function ProfileHeader({ profileUser }: ProfileHeaderProps) {
   } = profileUser;
 
   const sameUser = _id === loggedInUserIdString;
-  const followingArray = Array.isArray(_followingId) ? _followingId : typeof _followingId === 'string' ? [_followingId] : [];
-  const isFollowing = followingArray.includes(loggedInUserIdString);
+  const followersArray = Array.isArray(_followersId) ? _followersId : typeof _followersId === 'string' ? [_followersId] : [];
+  const isFollowing = followersArray.includes(loggedInUserIdString);
 
   const { data, loading: chatLoading } = useQuery<{
     messageRoom?: {
