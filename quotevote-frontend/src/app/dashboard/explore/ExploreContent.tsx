@@ -77,14 +77,19 @@ export default function ExploreContent() {
     <div className="-mx-4 -mt-6 md:-mx-4">
       {/* ── Logo + tagline ── */}
       <div className="flex flex-col items-center py-8 px-4 border-b border-border">
+        {/* Light mode: PNG logo */}
         <Image
           src="/assets/QuoteVoteLogo.png"
           alt="QuoteVote"
           width={220}
           height={66}
-          className="mb-3"
+          className="mb-3 dark:hidden"
           priority
         />
+        {/* Dark mode: white text logo */}
+        <span className="hidden dark:block mb-3 text-[2.75rem] font-black tracking-tight text-white leading-none select-none">
+          QUOTE.VOTE
+        </span>
         <p className="text-sm text-muted-foreground text-center">
           No algorithms. No ads. Just conversations.
         </p>
