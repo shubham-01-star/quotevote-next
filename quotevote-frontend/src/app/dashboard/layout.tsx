@@ -31,7 +31,7 @@ import { useRosterManagement } from '@/hooks/useRosterManagement';
 import { RequestInviteDialog } from '@/components/RequestInviteDialog';
 import ChatContent from '@/components/Chat/ChatContent';
 import { GET_NOTIFICATIONS, GET_CHAT_ROOMS } from '@/graphql/queries';
-import Avatar from '@/components/Avatar';
+import { DisplayAvatar } from '@/components/DisplayAvatar';
 import type { ChatRoom } from '@/types/chat';
 import NavSearch from '@/components/Navbars/NavSearch';
 import { Sheet, SheetContent } from '@/components/ui/sheet';
@@ -146,7 +146,6 @@ export default function DashboardLayout({
 
   const loggedIn = !!(user?.id || user?._id);
   const isAdmin = !!user?.admin;
-  const avatar = typeof user?.avatar === 'string' ? user.avatar : undefined;
   const displayName =
     (typeof user?.name === 'string' ? user.name : undefined) ||
     (typeof user?.username === 'string' ? user.username : undefined) ||
@@ -282,7 +281,12 @@ export default function DashboardLayout({
                     className="flex items-center gap-1.5 h-9 pl-1.5 pr-2.5 rounded-full bg-gray-100 hover:bg-gray-200 transition-all duration-150 cursor-pointer border-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#52b274]/50 group"
                     aria-label="Account menu"
                   >
-                    <Avatar src={avatar} alt={displayName} size="sm" className="size-7 flex-shrink-0" />
+                    <DisplayAvatar
+                      avatar={user?.avatar as string | Record<string, unknown> | undefined}
+                      username={username || undefined}
+                      size={28}
+                      className="size-7 flex-shrink-0"
+                    />
                     <span className="text-[13px] font-semibold text-gray-800 max-w-[90px] truncate">{displayName}</span>
                     <ChevronDown className="size-3.5 text-gray-500 transition-transform group-data-[state=open]:rotate-180" />
                   </button>
@@ -292,7 +296,12 @@ export default function DashboardLayout({
                   <div className="relative">
                     <div className="h-14 bg-gradient-to-r from-[#52b274] to-[#3a9e5f]" />
                     <div className="px-4 pb-3">
-                      <Avatar src={avatar} alt={displayName} size="sm" className="size-16 -mt-8 ring-4 ring-white shadow-md" />
+                      <DisplayAvatar
+                        avatar={user?.avatar as string | Record<string, unknown> | undefined}
+                        username={username || undefined}
+                        size={64}
+                        className="size-16 -mt-8 ring-4 ring-white shadow-md"
+                      />
                       <p className="mt-1 text-[15px] font-bold text-gray-900">{displayName}</p>
                       {username && <p className="text-[12px] text-gray-500">@{username}</p>}
                     </div>
@@ -471,10 +480,10 @@ export default function DashboardLayout({
           aria-label="Profile"
         >
           {loggedIn ? (
-            <Avatar
-              src={avatar}
-              alt={displayName}
-              size="sm"
+            <DisplayAvatar
+              avatar={user?.avatar as string | Record<string, unknown> | undefined}
+              username={username || undefined}
+              size={24}
               className={cn(
                 'size-6 transition-all',
                 isActive('/dashboard/profile') ? 'ring-2 ring-[#52b274] ring-offset-1' : 'ring-1 ring-gray-300'
