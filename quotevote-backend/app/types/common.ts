@@ -106,19 +106,24 @@ export interface User {
 export interface Post {
   _id: string;
   userId: string;
-  groupId?: string;
-  title?: string;
-  text?: string;
+  groupId: string;
+  title: string;
+  text: string;
   url?: string;
   citationUrl?: string;
   upvotes?: number;
   downvotes?: number;
+  reported?: number;
+  approved?: number;
   approvedBy?: string[];
   rejectedBy?: string[];
   reportedBy?: string[];
   bookmarkedBy?: string[];
+  votedBy?: string[];
   enable_voting?: boolean;
   featuredSlot?: number;
+  messageRoomId?: string;
+  urlId?: string;
   deleted?: boolean;
   created: Date | string;
   updatedAt?: Date | string;
@@ -131,12 +136,13 @@ export interface Post {
 export interface Comment {
   _id: string;
   userId: string;
-  postId: string;
+  postId?: string;
   content: string;
-  startWordIndex?: number;
-  endWordIndex?: number;
+  startWordIndex: number;
+  endWordIndex: number;
   url?: string;
   reaction?: string;
+  deleted?: boolean;
   created: Date | string;
   updatedAt?: Date | string;
 }
@@ -154,15 +160,22 @@ export interface Vote {
   endWordIndex?: number;
   tags?: string[];
   content?: string;
+  deleted?: boolean;
   created: Date | string;
   updatedAt?: Date | string;
 }
 
 export interface VoteLog {
   _id: string;
-  postId: string;
   userId: string;
+  voteId: string;
+  postId: string;
+  title?: string;
+  author?: string;
+  description: string;
+  action?: string;
   type: VoteType;
+  tokens: number;
   created: Date | string;
 }
 
@@ -185,6 +198,16 @@ export interface Quote {
 // Message & Chat Types
 // ============================================================================
 
+export interface ReadByDetailedEntry {
+  userId: string;
+  readAt?: Date | string;
+}
+
+export interface DeliveredToEntry {
+  userId: string;
+  deliveredAt?: Date | string;
+}
+
 export interface Message {
   _id: string;
   messageRoomId: string;
@@ -196,6 +219,8 @@ export interface Message {
   mutation_type?: string;
   deleted?: boolean;
   readBy?: string[];
+  readByDetailed?: ReadByDetailedEntry[];
+  deliveredTo?: DeliveredToEntry[];
   created: Date | string;
   updatedAt?: Date | string;
 }
@@ -207,8 +232,10 @@ export interface MessageRoom {
   messageType?: MessageType;
   title?: string;
   avatar?: string;
+  isDirect?: boolean;
   lastMessageTime?: Date | string;
   lastActivity?: Date | string;
+  lastSeenMessages?: Record<string, string>;
   unreadMessages?: number;
   created: Date | string;
   updatedAt?: Date | string;
@@ -331,12 +358,19 @@ export interface UserInvite {
   expiresAt?: Date | string;
 }
 
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate_content' | 'fake_account' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+export type ReportSeverity = 'low' | 'medium' | 'high' | 'critical';
+
 export interface UserReport {
   _id: string;
-  reportedUserId: string;
   reporterId: string;
-  reason: string;
-  status?: string;
+  reportedUserId: string;
+  reason: ReportReason;
+  description?: string;
+  status?: ReportStatus;
+  severity?: ReportSeverity;
+  adminNotes?: string;
   created: Date | string;
 }
 
