@@ -14,7 +14,6 @@ import {
   User,
   Settings2,
   ShieldCheck,
-  Mail,
   LogOut,
   ChevronDown,
 } from 'lucide-react';
@@ -53,7 +52,6 @@ const NAV_PAGES = [
   { path: '/dashboard/profile', page: 'profile' },
   { path: '/dashboard/notifications', page: 'notifications' },
   { path: '/dashboard/settings', page: 'settings' },
-  { path: '/dashboard/manage-invites', page: 'manage-invites' },
   { path: '/dashboard/control-panel', page: 'control-panel' },
 ] as const;
 
@@ -319,15 +317,6 @@ export default function DashboardLayout({
                       <div>
                         <p className="text-[13px] font-semibold">Settings & Privacy</p>
                         <p className="text-[11px] text-muted-foreground">Manage your account</p>
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => router.push('/dashboard/manage-invites')} className="cursor-pointer rounded-lg gap-3 py-2.5 px-3">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted">
-                        <Mail className="size-4 text-muted-foreground" />
-                      </div>
-                      <div>
-                        <p className="text-[13px] font-semibold">Manage Invites</p>
-                        <p className="text-[11px] text-muted-foreground">Invite friends to join</p>
                       </div>
                     </DropdownMenuItem>
                     {isAdmin && (
