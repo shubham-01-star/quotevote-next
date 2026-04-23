@@ -42,7 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { SubmitPost } from '@/components/SubmitPost/SubmitPost';
 
 /* ------------------------------------------------------------------ */
@@ -514,6 +514,7 @@ export default function DashboardLayout({
 
       <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
         <DialogContent className="max-w-md p-0" showCloseButton={false}>
+          <DialogTitle className="sr-only">Create Quote</DialogTitle>
           <SubmitPost setOpen={setSubmitDialogOpen} />
         </DialogContent>
       </Dialog>
