@@ -100,20 +100,22 @@ export default function SettingsPageClient() {
 
     try {
       const result = await updateUser({ variables: { user: userInput } })
-      if (result.data?.updateUser) {
-        const avatarValue =
-          typeof userData?.avatar === 'string'
-            ? userData.avatar
-            : (userData?.avatar as { url?: string } | undefined)?.url
+      const updated = result.data?.updateUser
+      if (updated) {
         setUserData({
           ...userData,
-          avatar: avatarValue,
-          ...otherValues,
+          ...updated,
+          avatar: userData?.avatar,
           themePreference: localDarkMode ? 'dark' : 'light',
         })
         setOriginalDarkMode(localDarkMode)
         toast.success('Settings saved successfully')
-        form.reset({ ...otherValues, password: '' })
+        form.reset({
+          name: updated.name ?? otherValues.name,
+          username: updated.username ?? otherValues.username,
+          email: updated.email ?? otherValues.email,
+          password: '',
+        })
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to save settings'

@@ -7,9 +7,6 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import { GraphQLError } from 'graphql';
 import { solidResolvers } from './data/resolvers/solidResolvers';
-import { addPost } from './data/resolvers/mutations/post/addPost';
-import { createGroup } from './data/resolvers/mutations/group/createGroup';
-import { getGroups } from './data/resolvers/queries/group/getGroups';
 import type { GraphQLContext, PubSub } from './types/graphql';
 import { requireAuth } from './data/utils/requireAuth';
 import { pubsub } from './data/utils/pubsub';
@@ -47,68 +44,19 @@ async function startServer() {
   // 2. Apollo Server Setup (v4/v5 Syntax)
   const server = new ApolloServer<GraphQLContext>({
     typeDefs: `
-      scalar JSON
-      scalar Date
-
       type Query {
         hello: String
         status: String
         solidConnectionStatus: SolidConnectionStatus
-        groups(limit: Int): [Group]
       }
 
       type Mutation {
-        addPost(post: PostInput!): Post
-        createGroup(group: GroupInput!): Group
-
-        solidStartConnect(issuer: String!): SolidConnectResult
-        solidFinishConnect(code: String!, state: String!, redirectUri: String!): SolidConnectResult
-        solidDisconnect: Boolean
-        solidPullPortableState: PortableState
-        solidPushPortableState(input: PortableStateInput!): Boolean
-        solidAppendActivityEvent(input: ActivityEventInput!): Boolean
-      }
-
-      type Group {
-        _id: String!
-        creatorId: String!
-        adminIds: [String]
-        allowedUserIds: [String]
-        privacy: String!
-        title: String!
-        url: String
-        description: String
-        created: String
-      }
-
-      type Post {
-        _id: String
-        userId: String
-        groupId: String
-        title: String
-        text: String
-        url: String
-        citationUrl: String
-        upvotes: Int
-        downvotes: Int
-        deleted: Boolean
-        created: String
-      }
-
-      input PostInput {
-        userId: String!
-        groupId: String!
-        title: String!
-        text: String!
-        citationUrl: String
-      }
-
-      input GroupInput {
-        creatorId: String!
-        title: String!
-        description: String!
-        privacy: String!
-        url: String
+          solidStartConnect(issuer: String!): SolidConnectResult
+          solidFinishConnect(code: String!, state: String!, redirectUri: String!): SolidConnectResult
+          solidDisconnect: Boolean
+          solidPullPortableState: PortableState
+          solidPushPortableState(input: PortableStateInput!): Boolean
+          solidAppendActivityEvent(input: ActivityEventInput!): Boolean
       }
 
       type SolidConnectionStatus {
@@ -119,27 +67,29 @@ async function startServer() {
       }
 
       type SolidConnectResult {
-        authorizationUrl: String
-        success: Boolean
-        webId: String
-        issuer: String
-        message: String
+          authorizationUrl: String
+          success: Boolean
+          webId: String
+          issuer: String
+          message: String
       }
 
+      scalar JSON
+
       type PortableState {
-        version: String
-        collections: [JSON]
+          version: String
+          collections: [JSON]
       }
 
       input PortableStateInput {
-        version: String
-        collections: [JSON]
+          version: String
+          collections: [JSON]
       }
 
       input ActivityEventInput {
-        type: String!
-        payload: JSON!
-        timestamp: String
+          type: String!
+          payload: JSON!
+          timestamp: String
       }
     `,
     resolvers: [
@@ -147,11 +97,6 @@ async function startServer() {
         Query: {
           hello: () => 'Hello from TypeScript Backend! 🚀',
           status: () => 'Active',
-          groups: getGroups,
-        },
-        Mutation: {
-          addPost,
-          createGroup,
         },
       },
       solidResolvers
