@@ -1,17 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
 import { useQuery, useSubscription } from '@apollo/client/react'
 import { Bell, SlidersHorizontal, X } from 'lucide-react'
-import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
 import { Checkbox } from '@/components/ui/checkbox'
 import PaginatedPostsList from '@/components/Post/PaginatedPostsList'
 import { useAppStore } from '@/store'
 import SearchGuestSections from '@/components/SearchContainer/SearchGuestSections'
 import DateRangeFilter from '@/components/SearchContainer/DateRangeFilter'
-import { SubmitPost } from '@/components/SubmitPost/SubmitPost'
 import { Notification } from '@/components/Notifications/Notification'
 import ChatContent from '@/components/Chat/ChatContent'
 import { GET_NOTIFICATIONS } from '@/graphql/queries'
@@ -199,9 +196,6 @@ export default function ExploreContent() {
   const interactions = searchParams.get('interactions') === 'true'
   const friends = searchParams.get('friends') === 'true'
 
-  const [submitDialogOpen, setSubmitDialogOpen] = useState(false)
-  const [totalCount, setTotalCount] = useState(0)
-
   const updateParams = useCallback(
     (updates: Record<string, string | null>) => {
       const params = new URLSearchParams(searchParams.toString())
@@ -268,69 +262,6 @@ export default function ExploreContent() {
       {/* ── Center: Posts feed ────────────────────────────────────────── */}
       <div className="flex-1 min-w-0">
 
-        {/* Logo + tagline */}
-        <div className="flex flex-col items-center py-8 px-4 border-b border-border">
-          <Image
-            src="/assets/QuoteVoteLogo.png"
-            alt="QuoteVote"
-            width={200}
-            height={60}
-            className="mb-3 dark:hidden"
-            priority
-          />
-          <span className="hidden dark:block mb-3 text-[2.5rem] font-black tracking-tight text-white leading-none select-none">
-            QUOTE.VOTE
-          </span>
-          <p className="text-sm text-muted-foreground text-center">
-            No algorithms. No ads. Just conversations.
-          </p>
-        </div>
-
-        {/* Active filter summary pills — visible on mobile where sidebar is hidden */}
-        {hasAnyFilter && (
-          <div className="lg:hidden px-4 py-2 border-b border-border flex flex-wrap gap-1.5 text-xs">
-            {q && (
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
-                🔍 &quot;{q}&quot;
-              </span>
-            )}
-            {friends && (
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
-                Friends Only
-              </span>
-            )}
-            {interactions && (
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
-                Most Popular
-              </span>
-            )}
-            {sortOrder === 'desc' && (
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
-                Newest First
-              </span>
-            )}
-            {sortOrder === 'asc' && (
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
-                Oldest First
-              </span>
-            )}
-            {hasDateFilter && (
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded-full px-2.5 py-0.5">
-                📅 {from || '…'} — {to || '…'}
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Result count */}
-        {totalCount > 0 && hasAnyFilter && (
-          <div className="px-4 pt-3">
-            <p className="text-sm font-medium text-muted-foreground text-center">
-              {totalCount.toLocaleString()} {totalCount === 1 ? 'result' : 'results'} found
-            </p>
-          </div>
-        )}
-
         {/* Posts feed */}
         <PaginatedPostsList
           defaultPageSize={20}
@@ -341,7 +272,6 @@ export default function ExploreContent() {
           sortOrder={sortOrder || undefined}
           interactions={interactions}
           friendsOnly={isLoggedIn ? friends : false}
-          onTotalCountChange={setTotalCount}
         />
 
         {/* Guest sections */}
@@ -359,13 +289,6 @@ export default function ExploreContent() {
         </aside>
       )}
 
-      {/* Create Quote Dialog */}
-      <Dialog open={submitDialogOpen} onOpenChange={setSubmitDialogOpen}>
-        <DialogContent className="max-w-md p-0" showCloseButton={false}>
-          <DialogTitle className="sr-only">Create Quote</DialogTitle>
-          <SubmitPost setOpen={setSubmitDialogOpen} />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
