@@ -5,7 +5,6 @@ import { useMutation, useApolloClient } from '@apollo/client/react';
 import moment from 'moment';
 import { X, UserPlus, ArrowUp, ArrowDown, MessageSquare, Quote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { DisplayAvatar } from '@/components/DisplayAvatar';
 import { DELETE_NOTIFICATION } from '@/graphql/mutations';
 import { GET_NOTIFICATIONS } from '@/graphql/queries';
 import { useAppStore } from '@/store';
@@ -193,18 +192,11 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
               }}
             >
               <div className="flex items-start gap-3">
-                <div className="relative flex-shrink-0">
-                  <DisplayAvatar
-                    avatar={notification.userBy.avatar as string | Record<string, unknown> | undefined}
-                    username={notification.userBy.username}
-                    size={40}
-                  />
-                  {icon && (
-                    <div className="absolute -bottom-1.5 -right-1.5">
-                      {icon}
-                    </div>
-                  )}
-                </div>
+                {icon && (
+                  <div className="flex-shrink-0 mt-0.5">
+                    {icon}
+                  </div>
+                )}
 
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-foreground">

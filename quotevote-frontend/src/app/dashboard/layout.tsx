@@ -243,29 +243,6 @@ export default function DashboardLayout({
               <span>Create</span>
             </button>
 
-            {/* Notifications */}
-            <Link href="/dashboard/notifications" className="outline-none" aria-label="Notifications">
-              <IconBtn
-                label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-                badge={unreadCount}
-                badgeColor="red"
-                active={isActive('/dashboard/notifications')}
-              >
-                <Bell className="size-5" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
-              </IconBtn>
-            </Link>
-
-            {/* Messages */}
-            <IconBtn
-              label="Messages"
-              badge={unreadChat}
-              badgeColor="green"
-              active={chatOpen}
-              onClick={() => setChatOpen(!chatOpen)}
-            >
-              <MessageSquare className="size-5" fill={chatOpen ? 'currentColor' : 'none'} />
-            </IconBtn>
-
             {/* Avatar dropdown */}
             {loggedIn && (
               <DropdownMenu>
@@ -366,16 +343,6 @@ export default function DashboardLayout({
           </Link>
 
           <div className="flex items-center gap-1.5">
-            <Link href="/dashboard/notifications" className="outline-none">
-              <IconBtn
-                label="Notifications"
-                badge={unreadCount}
-                badgeColor="red"
-                active={isActive('/dashboard/notifications')}
-              >
-                <Bell className="size-5" fill={isActive('/dashboard/notifications') ? 'currentColor' : 'none'} />
-              </IconBtn>
-            </Link>
             <IconBtn
               label="Messages"
               badge={unreadChat}
@@ -409,15 +376,26 @@ export default function DashboardLayout({
           <span className="text-[10px] font-semibold">Home</span>
         </Link>
 
-        {/* Search */}
-        <Link
-          href="/dashboard/explore"
-          className="flex flex-col items-center justify-center gap-0.5 flex-1 h-full text-muted-foreground transition-colors duration-150"
-          aria-label="Search"
+        {/* Messages */}
+        <button
+          type="button"
+          onClick={() => setChatOpen(!chatOpen)}
+          className={cn(
+            'relative flex flex-col items-center justify-center gap-0.5 flex-1 h-full transition-colors duration-150 border-0 bg-transparent cursor-pointer',
+            chatOpen ? 'text-[#52b274]' : 'text-muted-foreground'
+          )}
+          aria-label="Messages"
         >
-          <Search className="size-[22px]" />
-          <span className="text-[10px] font-semibold">Search</span>
-        </Link>
+          <div className="relative">
+            <MessageSquare className="size-[22px]" fill={chatOpen ? 'currentColor' : 'none'} />
+            {unreadChat > 0 && (
+              <span className="absolute -top-1 -right-2 flex items-center justify-center min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#52b274] text-white text-[8px] font-bold leading-none shadow ring-1 ring-card">
+                {unreadChat > 9 ? '9+' : unreadChat}
+              </span>
+            )}
+          </div>
+          <span className="text-[10px] font-semibold">Messages</span>
+        </button>
 
         {/* Create — floating green circle */}
         <button
