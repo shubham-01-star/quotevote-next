@@ -134,21 +134,9 @@ export function NotificationLists({ notifications, pageView = false }: Notificat
 
   if (!notifications || notifications.length === 0) {
     return (
-      <div
-        className={cn(
-          'flex flex-col items-center justify-center animate-in fade-in-0 slide-in-from-bottom-2 duration-500',
-          pageView ? 'h-full' : 'h-[30vh]',
-          'bg-card rounded-lg'
-        )}
-      >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/assets/ZeroNotificationsBG.png" alt="No notifications" className="animate-bounce" style={{ animationDuration: '2.5s' }} />
-        <p className="text-sm font-medium text-foreground mt-4">
-          You&apos;re all caught up!
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          Relax, you don&apos;t have any alerts right now.
-        </p>
+      <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
+        <p className="text-sm font-medium text-foreground">You&apos;re all caught up!</p>
+        <p className="text-xs text-muted-foreground mt-1">No alerts right now.</p>
       </div>
     );
   }
