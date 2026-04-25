@@ -4,6 +4,7 @@ import { useQuery } from '@apollo/client/react'
 import moment from 'moment'
 import { Users, Clock, XCircle, BarChart3, TrendingUp } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
+
 import { GET_USERS } from '@/graphql/queries'
 import type { InviteRequest } from '@/types/admin'
 
@@ -40,6 +41,8 @@ function StatCard({
   )
 }
 
+const CHART_H = 160 // px — bar area height
+
 export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
   const { data: usersData, loading: usersLoading } = useQuery<{
     users: { _id: string }[]
@@ -52,10 +55,11 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
   const totalActiveUsers =
     usersData?.users && Array.isArray(usersData.users) ? usersData.users.length : 0
   const pendingInvitations = inviteData.filter((u) => parseInt(u.status) === 1).length
-  const declinedUsers = inviteData.filter((u) => parseInt(u.status) === 2).length
-  const acceptedUsers = inviteData.filter((u) => parseInt(u.status) === 4).length
+  const declinedUsers    = inviteData.filter((u) => parseInt(u.status) === 2).length
+  const acceptedUsers    = inviteData.filter((u) => parseInt(u.status) === 4).length
   const totalInvitations = inviteData.length
 
+  // Build monthly buckets
   const monthly: Record<string, number> = {}
   inviteData.forEach(({ joined }) => {
     if (!joined) return
@@ -64,6 +68,10 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
   })
   const sortedMonths = Object.keys(monthly).sort().slice(-12)
   const maxValue = Math.max(...sortedMonths.map((m) => monthly[m]), 1)
+  const totalSignups = sortedMonths.reduce((s, m) => s + monthly[m], 0)
+
+  // Y-axis tick values: max, half, 0
+  const yTicks = [maxValue, Math.round(maxValue / 2), 0]
 
   if (usersLoading) {
     return (
@@ -73,7 +81,7 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
             <Skeleton key={i} className="h-[100px] rounded-xl" />
           ))}
         </div>
-        <Skeleton className="h-[200px] rounded-xl" />
+        <Skeleton className="h-[260px] rounded-xl" />
       </div>
     )
   }
@@ -141,9 +149,9 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
           <p className="text-sm font-semibold mb-3">Invite Breakdown</p>
           <div className="space-y-2.5">
             {[
-              { label: 'Accepted', count: acceptedUsers, color: 'bg-[#52b274]' },
-              { label: 'Pending', count: pendingInvitations, color: 'bg-amber-500' },
-              { label: 'Declined', count: declinedUsers, color: 'bg-red-500' },
+              { label: 'Accepted', count: acceptedUsers,    color: 'bg-[#52b274]' },
+              { label: 'Pending',  count: pendingInvitations, color: 'bg-amber-500' },
+              { label: 'Declined', count: declinedUsers,    color: 'bg-red-500' },
             ].map(({ label, count, color }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className={`size-2.5 rounded-full shrink-0 ${color}`} />
@@ -161,31 +169,101 @@ export default function StatisticsTab({ inviteData }: StatisticsTabProps) {
       {/* Bar chart */}
       {sortedMonths.length > 0 && (
         <div className="rounded-xl border border-border/60 bg-card p-5">
-          <div className="flex items-center gap-2 mb-5">
-            <BarChart3 className="size-4 text-[#52b274]" />
-            <p className="text-sm font-semibold">Monthly Signups</p>
-            <span className="text-xs text-muted-foreground ml-auto">Last {sortedMonths.length} months</span>
+          {/* Header */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="size-4 text-[#52b274]" />
+              <p className="text-sm font-semibold">Monthly Signups</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-lg font-bold tabular-nums">{totalSignups.toLocaleString()}</p>
+                <p className="text-[11px] text-muted-foreground leading-none">
+                  last {sortedMonths.length} month{sortedMonths.length !== 1 ? 's' : ''}
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-end gap-1.5 h-36">
-            {sortedMonths.map((month) => {
-              const count = monthly[month]
-              const heightPct = Math.max((count / maxValue) * 100, 4)
-              return (
-                <div key={month} className="flex-1 flex flex-col items-center gap-1.5 group/bar">
-                  <span className="text-[10px] font-semibold text-muted-foreground opacity-0 group-hover/bar:opacity-100 transition-opacity">
-                    {count}
-                  </span>
-                  <div
-                    className="w-full bg-[#52b274]/70 hover:bg-[#52b274] rounded-t transition-colors min-w-[6px]"
-                    style={{ height: `${heightPct}%` }}
-                    title={`${moment(month, 'YYYY-MM').format('MMM YYYY')}: ${count}`}
-                  />
-                  <span className="text-[9px] text-muted-foreground -rotate-45 origin-top-left whitespace-nowrap">
-                    {moment(month, 'YYYY-MM').format('MMM YY')}
-                  </span>
+
+          <div className="flex gap-3">
+            {/* Y-axis — matched exactly to bar area height */}
+            <div className="relative w-6 shrink-0" style={{ height: CHART_H }}>
+              {yTicks.map((tick, i) => (
+                <span
+                  key={i}
+                  className="absolute right-0 text-[10px] tabular-nums text-muted-foreground/70 leading-none"
+                  style={{
+                    top:       i === 0 ? 0        : i === 1 ? '50%' : undefined,
+                    bottom:    i === 2 ? 0        : undefined,
+                    transform: i === 1 ? 'translateY(-50%)' : undefined,
+                  }}
+                >
+                  {tick}
+                </span>
+              ))}
+            </div>
+
+            {/* Chart */}
+            <div className="flex-1 flex flex-col">
+              {/* Bar area — explicit px height so child height-% resolves correctly */}
+              <div className="relative" style={{ height: CHART_H }}>
+                {/* Gridlines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div className="w-full border-t border-dashed border-border/30" />
+                  <div className="w-full border-t border-dashed border-border/30" />
+                  <div className="w-full border-t border-border/50" />
                 </div>
-              )
-            })}
+
+                {/* Bars */}
+                <div className="absolute inset-0 flex items-end gap-1">
+                  {sortedMonths.map((month) => {
+                    const count = monthly[month]
+                    const heightPct = Math.max((count / maxValue) * 100, 2)
+
+                    return (
+                      <div key={month} className="group relative flex-1 h-full flex items-end">
+                        {/* Tooltip above bar */}
+                        <div
+                          className="absolute left-1/2 -translate-x-1/2 z-10 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"
+                          style={{ bottom: `calc(${heightPct}% + 8px)` }}
+                        >
+                          <div className="relative bg-foreground text-background text-[10px] font-bold px-2 py-1 rounded-md shadow-lg whitespace-nowrap">
+                            {count}
+                            <span className="absolute top-full left-1/2 -translate-x-1/2 border-[5px] border-transparent border-t-foreground" />
+                          </div>
+                        </div>
+
+                        {/* Bar — gradient fill, brightens on hover */}
+                        <div
+                          className="w-full rounded-t-sm cursor-default"
+                          style={{
+                            height: `${heightPct}%`,
+                            background: 'linear-gradient(to bottom, #52b274, #52b27455)',
+                            transition: 'filter 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1.15)' }}
+                          onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.filter = 'brightness(1)' }}
+                        />
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* X-axis labels */}
+              <div className="flex gap-1 mt-2">
+                {sortedMonths.map((month) => (
+                  <div key={month} className="flex-1 flex flex-col items-center">
+                    <span className="text-[10px] font-medium text-muted-foreground leading-tight">
+                      {moment(month, 'YYYY-MM').format('MMM')}
+                    </span>
+                    <span className="text-[9px] text-muted-foreground/40 leading-tight">
+                      {moment(month, 'YYYY-MM').format("'YY")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
