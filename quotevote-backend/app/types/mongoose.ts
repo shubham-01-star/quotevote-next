@@ -60,9 +60,9 @@ export interface PostDocument
   extends BaseDocument, Omit<Common.Post, '_id' | 'userId' | 'groupId' | 'updatedAt'> {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  groupId?: Types.ObjectId;
-  dayPoints?: number;
-  pointTimestamp?: Date;
+  groupId: Types.ObjectId;
+  dayPoints: number;
+  pointTimestamp: Date;
 }
 
 export interface PostModel extends Model<PostDocument> {
@@ -75,11 +75,13 @@ export interface PostModel extends Model<PostDocument> {
 // ============================================================================
 
 export interface CommentDocument
-  extends BaseDocument, Omit<Common.Comment, '_id' | 'userId' | 'postId' | 'updatedAt'> {
+  extends BaseDocument, Omit<Common.Comment, '_id' | 'userId' | 'postId' | 'updatedAt' | 'created'> {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
-  postId: Types.ObjectId;
+  postId?: Types.ObjectId;
+  created: Date;
 }
+
 
 export interface CommentModel extends Model<CommentDocument> {
   findByPostId(postId: string): Promise<CommentDocument[]>;
@@ -103,9 +105,10 @@ export interface VoteModel extends Model<VoteDocument> {
 }
 
 export interface VoteLogDocument
-  extends BaseDocument, Omit<Common.VoteLog, '_id' | 'userId' | 'postId'> {
+  extends BaseDocument, Omit<Common.VoteLog, '_id' | 'userId' | 'voteId' | 'postId'> {
   _id: Types.ObjectId;
   userId: Types.ObjectId;
+  voteId: Types.ObjectId;
   postId: Types.ObjectId;
 }
 
@@ -253,6 +256,7 @@ export interface PresenceModel extends Model<PresenceDocument> {
 export interface TypingDocument extends Document, Omit<Common.Typing, 'messageRoomId' | 'userId'> {
   messageRoomId: Types.ObjectId;
   userId: Types.ObjectId;
+  expiresAt?: Date;
 }
 
 export interface TypingModel extends Model<TypingDocument> {
