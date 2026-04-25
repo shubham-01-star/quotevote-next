@@ -246,6 +246,7 @@ export const GET_TOP_POSTS = gql`
         citationUrl
         rejectedBy
         approvedBy
+        enable_voting
         creator {
           name
           username
@@ -321,6 +322,7 @@ export const GET_PAGINATED_POSTS = gql`
         citationUrl
         rejectedBy
         approvedBy
+        enable_voting
         creator {
           name
           username
@@ -850,26 +852,16 @@ export const USER_INVITE_REQUESTS = gql`
  * Get user reports (admin only)
  */
 export const GET_USER_REPORTS = gql`
-  query getUserReports {
-    getUserReports {
+  query getUserReports($userId: String!, $status: String) {
+    getUserReports(userId: $userId, status: $status) {
       _id
-      reportedUser {
-        _id
-        username
-        name
-        avatar
-      }
-      reportedBy {
-        _id
-        username
-        name
-        avatar
-      }
+      _reporterId
+      _reportedUserId
       reason
       description
       severity
-      created
       status
+      createdAt
     }
   }
 `

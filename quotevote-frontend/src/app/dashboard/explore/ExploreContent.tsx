@@ -153,7 +153,7 @@ function LeftSidebar(props: LeftSidebarProps) {
   return (
     <div className="flex flex-col flex-1 min-h-0">
 
-      {/* ── Notifications ── */}
+      {/* ── Notifications card ── */}
       {userId && (
         <>
           <div data-explore-section-header="notifications" className="shrink-0 flex items-center gap-2 px-4 py-3 border-b border-border/60 bg-background">
@@ -165,7 +165,7 @@ function LeftSidebar(props: LeftSidebarProps) {
               </span>
             )}
           </div>
-          <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 bg-background">
+          <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
             <Notification
               loading={loading}
               notifications={notifications}
@@ -176,7 +176,7 @@ function LeftSidebar(props: LeftSidebarProps) {
         </>
       )}
 
-      {/* ── Filters ── (always visible, pushes to bottom when notifications present) */}
+      {/* ── Filters card ── */}
       <FilterPanel {...filterProps} />
     </div>
   )
