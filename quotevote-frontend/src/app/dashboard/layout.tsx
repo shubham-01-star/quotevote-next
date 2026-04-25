@@ -468,7 +468,7 @@ export default function DashboardLayout({
         <div
           className={cn('mx-auto px-0 md:px-4', pathname.startsWith('/dashboard/post/') && 'md:px-8 lg:px-12')}
           style={{
-            maxWidth: pathname.startsWith('/dashboard/explore')
+            maxWidth: pathname.startsWith('/dashboard/explore') || pathname.startsWith('/dashboard/control-panel')
               ? 'none'
               : pathname.startsWith('/dashboard/post/')
                 ? '1170px'
