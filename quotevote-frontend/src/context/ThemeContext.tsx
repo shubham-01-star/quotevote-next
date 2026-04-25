@@ -61,12 +61,14 @@ export function ThemeContextProvider({
     return false
   }
 
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() =>
-    getInitialThemeMode()
-  )
-  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(() =>
-    getInitialNeoBrutalism()
-  )
+  const [themeMode, setThemeMode] = useState<ThemeMode>('light')
+  const [neoBrutalism, setNeoBrutalism] = useState<boolean>(false)
+
+  // Sync from localStorage after mount — keeps server/client initial renders identical
+  useEffect(() => {
+    setThemeMode(getInitialThemeMode())
+    setNeoBrutalism(getInitialNeoBrutalism())
+  }, [])
 
   // Apply dark class to <html> whenever themeMode changes
   useEffect(() => {
