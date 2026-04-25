@@ -246,6 +246,7 @@ export const GET_TOP_POSTS = gql`
         citationUrl
         rejectedBy
         approvedBy
+        enable_voting
         creator {
           name
           username
@@ -321,6 +322,7 @@ export const GET_PAGINATED_POSTS = gql`
         citationUrl
         rejectedBy
         approvedBy
+        enable_voting
         creator {
           name
           username
