@@ -863,6 +863,7 @@ export const GET_USER_REPORTS = gql`
       description
       severity
       status
+      adminNotes
       createdAt
     }
   }
