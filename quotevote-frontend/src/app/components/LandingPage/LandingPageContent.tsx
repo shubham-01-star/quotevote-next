@@ -2169,8 +2169,8 @@ function formatTimeAgo(created: string | undefined, now: number): string {
 function FeaturedPostCard({ post, timeAgo }: { post: Post; timeAgo: string }) {
   const creatorName = post.creator?.name || post.creator?.username || 'Anonymous';
   const username = post.creator?.username || 'anonymous';
-  const upvotes = post.approvedBy?.length || 0;
-  const downvotes = post.rejectedBy?.length || 0;
+  const upvotes = post.upvotes ?? 0;
+  const downvotes = post.downvotes ?? 0;
   const commentCount = post.comments?.length || 0;
   const quoteCount = post.quotes?.length || 0;
 
