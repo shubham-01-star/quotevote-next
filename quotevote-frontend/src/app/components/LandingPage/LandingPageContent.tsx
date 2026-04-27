@@ -182,13 +182,10 @@ export function LandingPageContent({
     <div className="min-h-screen flex flex-col" style={{ background: '#ffffff' }} data-testid="landing-page">
       {/* ── Navbar ────────────────────────────────────────────── */}
       <nav
-        className="sticky top-0 z-50 border-b backdrop-blur-md"
+        className="sticky top-0 z-50 bg-gradient-to-br from-white to-gray-50 border-b-2 border-transparent bg-clip-padding"
         role="navigation"
         aria-label="Main navigation"
-        style={{
-          background: 'rgba(255,255,255,0.97)',
-          borderColor: '#e2e8f0',
-        }}
+        style={{ borderImage: 'linear-gradient(90deg, #2AE6B2, #27C4E1, #178BE1) 1' }}
       >
         <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link
@@ -197,18 +194,18 @@ export function LandingPageContent({
             aria-label="Quote.Vote home"
           >
             <Image
-              src="/assets/QuoteVoteLogo.png"
-              alt="Quote.Vote Logo"
-              width={36}
-              height={36}
+              src="/icons/android-chrome-192x192.png"
+              alt="Quote.Vote"
+              width={28}
+              height={28}
               className="object-contain"
               priority
             />
             <span
               className="font-extrabold text-lg tracking-wide hidden sm:block select-none"
-              style={{ color: '#16a34a' }}
+              style={{ color: '#0A2342' }}
             >
-              QUOTE.VOTE
+              Quote.Vote
             </span>
           </Link>
 
@@ -319,14 +316,7 @@ export function LandingPageContent({
             style={{ color: '#0f172a' }}
           >
             Share Ideas.{' '}
-            <span
-              style={{
-                background: 'linear-gradient(100deg, #16a34a 10%, #4ade80 55%, #16a34a 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
+            <span style={{ color: '#16a34a' }}>
               Vote
             </span>{' '}
             on What Matters.
